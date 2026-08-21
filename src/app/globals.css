@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  /* Identidad Motocambio v1.0 */
+  --rojo: #c8102e;
+  --rojo-oscuro: #9e0c24;
+  --asfalto: #14141f;
+  --tinta-2: #44445a;
+  --gris: #6b6b7b;
+  --linea: #e6e2dc;
+  --hueso: #f7f5f2;
+  --verde-ok: #1e7f4f;
+  --ambar: #b4690e;
+}
+
+@theme inline {
+  --color-rojo: var(--rojo);
+  --color-rojo-oscuro: var(--rojo-oscuro);
+  --color-asfalto: var(--asfalto);
+  --color-tinta2: var(--tinta-2);
+  --color-gris: var(--gris);
+  --color-linea: var(--linea);
+  --color-hueso: var(--hueso);
+  --color-verde-ok: var(--verde-ok);
+  --color-ambar: var(--ambar);
+  --font-titulos: "Archivo", "Trebuchet MS", Arial, sans-serif;
+  --font-texto: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  background: var(--hueso);
+  color: var(--asfalto);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: "Archivo", "Trebuchet MS", Arial, sans-serif;
+}
