@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
-import { Autocompletar, type ModeloCatalogo } from "@/components/Autocompletar";
+import { type ModeloCatalogo } from "@/components/Autocompletar";
+import { SelectorModelo } from "@/components/SelectorModelo";
 
 const PROVINCIAS = [
   "CABA", "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán",
@@ -51,6 +52,7 @@ export default function Garage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
   const [catalogo, setCatalogo] = useState<ModeloCatalogo[]>([]);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
   const [motos, setMotos] = useState<Moto[]>([]);
   const [aviso, setAviso] = useState("");
 
@@ -75,23 +77,53 @@ export default function Garage() {
   const [motoOfrecida, setMotoOfrecida] = useState<string>("");
   const [guardandoBusqueda, setGuardandoBusqueda] = useState(false);
 
+  // El catálogo se carga SOLO e independiente del resto: es la pieza
+  // crítica del matching y no puede fallar en silencio.
+  const cargarCatalogo = useCallback(async (): Promise<ModeloCatalogo[]> => {
+    setErrorCatalogo("");
+    const { data, error } = await supabase
+      .from("catalogo_modelos")
+      .select("id, marca, modelo, categoria, cilindrada")
+      .eq("activo", true)
+      .order("marca")
+      .order("modelo");
+    if (error) {
+      console.error("[Motocambio] Error cargando catálogo:", error);
+      setErrorCatalogo(error.message);
+      return [];
+    }
+    if (!data || data.length === 0) {
+      console.warn("[Motocambio] Catálogo vacío");
+      setErrorCatalogo("El catálogo llegó vacío.");
+      return [];
+    }
+    setCatalogo(data as ModeloCatalogo[]);
+    return data as ModeloCatalogo[];
+  }, [supabase]);
+
   const cargarTodo = useCallback(async () => {
+    // 1) Catálogo primero, con un reintento automático si falla
+    let cat = await cargarCatalogo();
+    if (cat.length === 0) {
+      await new Promise((r) => setTimeout(r, 1500));
+      cat = await cargarCatalogo();
+    }
+
+    // 2) Datos del usuario
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
     setUserId(user.id);
 
-    const [perfilR, catR, motosR, busR] = await Promise.all([
+    const [perfilR, motosR, busR] = await Promise.all([
       supabase.from("perfiles").select("nombre").eq("id", user.id).single(),
-      supabase.from("catalogo_modelos").select("*").eq("activo", true).order("marca"),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
     ]);
 
     if (perfilR.data) setNombre(perfilR.data.nombre);
-    const cat = (catR.data as ModeloCatalogo[]) || [];
-    setCatalogo(cat);
+    if (motosR.error) console.error("[Motocambio] Error cargando motos:", motosR.error);
     setMotos((motosR.data as Moto[]) || []);
 
     const b = busR.data?.[0];
@@ -104,11 +136,12 @@ export default function Garage() {
       setBuscados(cat.filter((m) => ids.includes(m.id)));
       setAceptos((b.busqueda_acepta as { descripcion: string }[]).map((x) => x.descripcion));
     }
-  }, [supabase]);
+  }, [supabase, cargarCatalogo]);
 
   useEffect(() => {
     cargarTodo();
-  }, [cargarTodo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function avisar(texto: string) {
     setAviso(texto);
@@ -238,6 +271,21 @@ export default function Garage() {
           </div>
         )}
 
+        {errorCatalogo && (
+          <div className="mb-6 bg-[#FBF0F1] border border-[#EED2D6] rounded-xl p-4 text-sm text-rojo flex items-center gap-3 flex-wrap">
+            <span>
+              ⚠️ No pudimos cargar el catálogo de modelos ({errorCatalogo}).
+              Sin catálogo no se puede cargar una moto.
+            </span>
+            <button
+              onClick={() => cargarCatalogo()}
+              className="ml-auto bg-rojo text-white font-semibold rounded-lg px-4 py-2"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
         {/* ---------- MIS MOTOS ---------- */}
         <section className="mb-10">
           <h2 className="font-titulos font-extrabold text-xl mb-3">🏍️ Mis motos</h2>
@@ -307,7 +355,12 @@ export default function Garage() {
                   </div>
                 ) : (
                   <div className="mt-1">
-                    <Autocompletar catalogo={catalogo} onElegir={setModeloSel} />
+                    <SelectorModelo catalogo={catalogo} onElegir={setModeloSel} />
+                    {catalogo.length > 0 && (
+                      <p className="text-xs text-gris mt-1.5">
+                        {catalogo.length} modelos en el catálogo. ¿Falta el tuyo? Escribinos a contacto@motocambio.com.ar
+                      </p>
+                    )}
                   </div>
                 )}
                 {modeloSel && modeloSel.cilindrada < 280 && (
@@ -404,9 +457,8 @@ export default function Garage() {
                   </div>
                 )}
                 <div className="mt-1">
-                  <Autocompletar catalogo={catalogo}
-                    onElegir={(m) => { if (!buscados.find((x) => x.id === m.id)) setBuscados([...buscados, m]); }}
-                    placeholder="Agregar modelo buscado…" />
+                  <SelectorModelo catalogo={catalogo} reiniciarAlElegir
+                    onElegir={(m) => { if (!buscados.find((x) => x.id === m.id)) setBuscados([...buscados, m]); }} />
                 </div>
               </div>
               <div>

@@ -64,7 +64,7 @@ export default function Terminos() {
               usuarios: la comunicación inicial ocurre por el chat interno. El
               dominio (patente) de tu moto es privado y no se publica. Podés
               pedir la baja de tu cuenta y tus datos escribiendo a
-              hola@motocambio.com.ar.
+              contacto@motocambio.com.ar.
             </p>
           </section>
           <section>
@@ -78,7 +78,7 @@ export default function Terminos() {
           </section>
           <p className="text-sm text-gris border-t border-linea pt-4">
             Última actualización: beta cerrada 2026 · Contacto:
-            hola@motocambio.com.ar
+            contacto@motocambio.com.ar
           </p>
         </div>
       </div>

@@ -18,8 +18,7 @@ function Contenido() {
         cuenta. Tocalo y ya podés ingresar.
       </p>
       <p className="text-sm text-gris mt-4">
-        ¿No llegó? Mirá en spam o promociones. El remitente es Supabase Auth
-        (nuestro sistema de cuentas).
+        ¿No llegó? Mirá en spam o promociones. Buscá el mail de Motocambio.
       </p>
       <Link
         href="/login"
