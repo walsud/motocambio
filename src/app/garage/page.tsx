@@ -11,6 +11,13 @@ const PROVINCIAS = [
   "Chaco", "San Juan", "San Luis", "Jujuy", "La Pampa", "Otra",
 ];
 
+const ACCESORIOS_COMUNES = [
+  "Baúl trasero", "Maletas laterales", "Parabrisas alto", "Escape deportivo",
+  "Luces auxiliares", "Defensas", "Cubre manos", "Puños calefaccionados",
+  "Soporte GPS/celular", "Toma USB/12V", "Alarma", "Asiento confort",
+  "Portaequipaje", "Cubiertas nuevas",
+];
+
 interface Moto {
   id: string;
   modelo_id: number;
@@ -21,6 +28,7 @@ interface Moto {
   visibilidad: string;
   estado: string;
   fotos: string[];
+  accesorios: string[];
 }
 
 interface BusquedaModelo {
@@ -64,6 +72,8 @@ export default function Garage() {
   const [provincia, setProvincia] = useState("CABA");
   const [dominio, setDominio] = useState("");
   const [visibilidad, setVisibilidad] = useState<"publicada" | "entrega">("publicada");
+  const [accesoriosSel, setAccesoriosSel] = useState<string[]>([]);
+  const [otroAccesorio, setOtroAccesorio] = useState("");
   const [archivos, setArchivos] = useState<File[]>([]);
   const [guardandoMoto, setGuardandoMoto] = useState(false);
 
@@ -175,6 +185,7 @@ export default function Garage() {
         provincia,
         dominio: dominio.trim().toUpperCase() || null,
         visibilidad,
+        accesorios: accesoriosSel,
       })
       .select()
       .single();
@@ -212,6 +223,7 @@ export default function Garage() {
 
     setGuardandoMoto(false);
     setModeloSel(null); setAnio(""); setKm(""); setPrecio(""); setDominio(""); setArchivos([]);
+    setAccesoriosSel([]); setOtroAccesorio("");
     avisar("🎉 ¡Moto cargada! Ya está en el motor de matching.");
     cargarTodo();
   }
@@ -312,6 +324,12 @@ export default function Garage() {
                       {m.km.toLocaleString("es-AR")} km · {m.provincia}
                       {m.precio_usd ? ` · USD ${m.precio_usd.toLocaleString("es-AR")}` : ""}
                     </p>
+                    {m.accesorios?.length > 0 && (
+                      <p className="text-[11px] text-tinta2 mt-1.5 bg-hueso rounded-lg px-2 py-1">
+                        🧰 {m.accesorios.slice(0, 3).join(" · ")}
+                        {m.accesorios.length > 3 ? ` · +${m.accesorios.length - 3} más` : ""}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                       <span className={`text-[11px] font-bold rounded-full px-2.5 py-0.5 ${
                         m.visibilidad === "publicada" ? "bg-[#E9F7EF] text-verde-ok" : "bg-[#EDF0FA] text-[#3D5AA9]"
@@ -420,6 +438,80 @@ export default function Garage() {
                 <p className="text-xs text-gris font-normal mt-1.5">
                   La moto de entrega no aparece en listados, pero el matching sí la ve (cualquier cilindrada).
                 </p>
+              </div>
+              <div className="text-sm font-semibold">
+                Accesorios agregados
+                <p className="text-xs text-gris font-normal mt-0.5 mb-2">
+                  Tocá los que tenga tu moto — suman valor y atraen matches.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {ACCESORIOS_COMUNES.map((a) => {
+                    const activo = accesoriosSel.includes(a);
+                    return (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() =>
+                          setAccesoriosSel(
+                            activo
+                              ? accesoriosSel.filter((x) => x !== a)
+                              : [...accesoriosSel, a]
+                          )
+                        }
+                        className={`rounded-full border-2 px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                          activo
+                            ? "border-rojo bg-[#FBF0F1] text-rojo"
+                            : "border-linea text-tinta2 hover:border-gris"
+                        }`}
+                      >
+                        {activo ? "✓ " : "+ "}{a}
+                      </button>
+                    );
+                  })}
+                  {accesoriosSel
+                    .filter((a) => !ACCESORIOS_COMUNES.includes(a))
+                    .map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => setAccesoriosSel(accesoriosSel.filter((x) => x !== a))}
+                        className="rounded-full border-2 border-rojo bg-[#FBF0F1] text-rojo px-3 py-1.5 text-[13px] font-semibold"
+                      >
+                        ✓ {a} ✕
+                      </button>
+                    ))}
+                </div>
+                <div className="flex gap-2 mt-2.5">
+                  <input
+                    value={otroAccesorio}
+                    onChange={(e) => setOtroAccesorio(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const v = otroAccesorio.trim();
+                        if (v && !accesoriosSel.includes(v)) {
+                          setAccesoriosSel([...accesoriosSel, v]);
+                          setOtroAccesorio("");
+                        }
+                      }
+                    }}
+                    placeholder="Otro accesorio… (ej.: slider, pata más ancha)"
+                    className="flex-1 border-2 border-linea rounded-xl px-3.5 py-2 text-sm font-normal outline-none focus:border-rojo"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = otroAccesorio.trim();
+                      if (v && !accesoriosSel.includes(v)) {
+                        setAccesoriosSel([...accesoriosSel, v]);
+                        setOtroAccesorio("");
+                      }
+                    }}
+                    className="border-2 border-linea rounded-xl px-4 text-sm font-semibold hover:border-rojo"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
               <label className="text-sm font-semibold">
                 Fotos (hasta 6 — se comprimen solas)
