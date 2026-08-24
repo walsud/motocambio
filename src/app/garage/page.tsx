@@ -460,7 +460,7 @@ export default function Garage() {
 
         <div className="grid gap-8 lg:grid-cols-2 items-start">
           {/* ---------- CARGAR MOTO ---------- */}
-          <section ref={formRef} className={`bg-white border rounded-2xl shadow-sm p-6 ${motoEditando ? "border-rojo border-2" : "border-linea"}`}>
+          <section ref={formRef} className={`min-w-0 bg-white border rounded-2xl shadow-sm p-6 ${motoEditando ? "border-rojo border-2" : "border-linea"}`}>
             <h2 className="font-titulos font-extrabold text-xl mb-1">
               {motoEditando ? "✏️ Editar publicación" : "➕ Cargar una moto"}
             </h2>
@@ -673,7 +673,7 @@ export default function Garage() {
           </section>
 
           {/* ---------- QUÉ BUSCO ---------- */}
-          <section className="bg-white border border-linea rounded-2xl shadow-sm p-6">
+          <section className="min-w-0 bg-white border border-linea rounded-2xl shadow-sm p-6">
             <h2 className="font-titulos font-extrabold text-xl mb-1">🎯 Qué busco</h2>
             <p className="text-sm text-gris mb-5">
               Podés buscar cualquier cilindrada: publicás +300, pedís lo que quieras.

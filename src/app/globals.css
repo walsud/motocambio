@@ -31,6 +31,22 @@ body {
   background: var(--hueso);
   color: var(--asfalto);
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Ningún campo puede empujar el ancho de la página
+   (el selector de archivos, con nombres de foto largos, lo hacía) */
+input, select, textarea, label {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* iPhone hace zoom automático al tocar un campo con letra menor a 16px,
+   y el zoom queda pegado: en pantallas chicas los campos van a 16px. */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 h1, h2, h3 {
