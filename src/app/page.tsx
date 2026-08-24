@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo, Wordmark } from "@/components/Logo";
 
 export default function Inicio() {
@@ -13,11 +14,25 @@ export default function Inicio() {
         <span className="text-[#FF7A8E]">Cambiala.</span>
       </h1>
       <p className="text-[#C9C9D9] max-w-md">
-        Estamos construyendo la plataforma. Beta cerrada: primavera 2026 — los
-        primeros de la lista de espera entran antes.
+        Publicá la moto que tenés, contá cuál buscás, y te avisamos cuando hay
+        match. Beta cerrada: primavera 2026.
       </p>
+      <div className="flex gap-3 flex-wrap justify-center">
+        <Link
+          href="/registro"
+          className="bg-rojo hover:bg-rojo-oscuro text-white font-titulos font-extrabold rounded-xl px-7 py-3.5"
+        >
+          Crear cuenta gratis
+        </Link>
+        <Link
+          href="/login"
+          className="border border-white/40 text-white font-titulos font-extrabold rounded-xl px-7 py-3.5 hover:bg-white/10"
+        >
+          Ingresar
+        </Link>
+      </div>
       <p className="text-xs text-[#8A8A9E] uppercase tracking-widest font-bold">
-        Semana 1 de desarrollo · motocambio.com.ar
+        Semana 3 de desarrollo · motocambio.com.ar
       </p>
     </main>
   );
