@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
 import { type ModeloCatalogo } from "@/components/Autocompletar";
@@ -25,6 +25,7 @@ interface Moto {
   km: number;
   precio_usd: number | null;
   provincia: string | null;
+  dominio: string | null;
   visibilidad: string;
   estado: string;
   fotos: string[];
@@ -76,6 +77,10 @@ export default function Garage() {
   const [otroAccesorio, setOtroAccesorio] = useState("");
   const [archivos, setArchivos] = useState<File[]>([]);
   const [guardandoMoto, setGuardandoMoto] = useState(false);
+  // --- edición de una moto ya cargada ---
+  const [motoEditando, setMotoEditando] = useState<Moto | null>(null);
+  const [fotosExistentes, setFotosExistentes] = useState<string[]>([]);
+  const formRef = useRef<HTMLElement>(null);
 
   // --- búsqueda ---
   const [buscados, setBuscados] = useState<ModeloCatalogo[]>([]);
@@ -166,7 +171,37 @@ export default function Garage() {
     [catalogo]
   );
 
-  // ---------- ALTA DE MOTO ----------
+  function limpiarFormulario() {
+    setModeloSel(null); setAnio(""); setKm(""); setPrecio(""); setDominio("");
+    setVisibilidad("publicada"); setArchivos([]);
+    setAccesoriosSel([]); setOtroAccesorio("");
+    setMotoEditando(null); setFotosExistentes([]);
+  }
+
+  // ---------- EDICIÓN ----------
+  function editarMoto(m: Moto) {
+    setMotoEditando(m);
+    setModeloSel(catalogo.find((c) => c.id === m.modelo_id) || null);
+    setAnio(String(m.anio));
+    setKm(String(m.km));
+    setPrecio(m.precio_usd ? String(m.precio_usd) : "");
+    setProvincia(m.provincia || "CABA");
+    setDominio(m.dominio || "");
+    setVisibilidad(m.visibilidad === "entrega" ? "entrega" : "publicada");
+    setAccesoriosSel(m.accesorios || []);
+    setFotosExistentes(m.fotos || []);
+    setArchivos([]);
+    setOtroAccesorio("");
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Convierte una URL pública del bucket en su ruta interna, para poder borrarla
+  function rutaDeFoto(url: string): string | null {
+    const parte = url.split("/object/public/fotos/")[1];
+    return parte ? decodeURIComponent(parte) : null;
+  }
+
+  // ---------- ALTA / EDICIÓN DE MOTO ----------
   async function guardarMoto(e: React.FormEvent) {
     e.preventDefault();
     if (!userId || !modeloSel) {
@@ -174,6 +209,71 @@ export default function Garage() {
       return;
     }
     setGuardandoMoto(true);
+
+    // ----- Modo edición: actualizo la publicación existente -----
+    if (motoEditando) {
+      const { error } = await supabase
+        .from("motos")
+        .update({
+          modelo_id: modeloSel.id,
+          anio: parseInt(anio),
+          km: parseInt(km) || 0,
+          precio_usd: precio ? parseInt(precio) : null,
+          provincia,
+          dominio: dominio.trim().toUpperCase() || null,
+          visibilidad,
+          accesorios: accesoriosSel,
+        })
+        .eq("id", motoEditando.id);
+
+      if (error) {
+        setGuardandoMoto(false);
+        avisar(
+          error.message.includes("300")
+            ? "Ese modelo es de menos de 300cc: solo puede quedar como moto de entrega."
+            : "No se pudo guardar: " + error.message
+        );
+        return;
+      }
+
+      // Fotos que el usuario sacó: las borro del almacenamiento
+      const borradas = (motoEditando.fotos || []).filter((u) => !fotosExistentes.includes(u));
+      if (borradas.length) {
+        const rutas = borradas.map(rutaDeFoto).filter((r): r is string => !!r);
+        if (rutas.length) await supabase.storage.from("fotos").remove(rutas);
+      }
+
+      // Fotos nuevas: comprimo y subo hasta completar 6
+      const nuevasUrls: string[] = [];
+      const cupo = Math.max(0, 6 - fotosExistentes.length);
+      for (let i = 0; i < Math.min(archivos.length, cupo); i++) {
+        try {
+          const blob = await comprimirFoto(archivos[i]);
+          const ruta = `${userId}/${motoEditando.id}/e${Date.now()}-${i}.jpg`;
+          const { error: errSubida } = await supabase.storage
+            .from("fotos")
+            .upload(ruta, blob, { contentType: "image/jpeg", upsert: true });
+          if (!errSubida) {
+            const { data: pub } = supabase.storage.from("fotos").getPublicUrl(ruta);
+            nuevasUrls.push(pub.publicUrl);
+          }
+        } catch {
+          // una foto que falla no frena la edición
+        }
+      }
+      await supabase
+        .from("motos")
+        .update({ fotos: [...fotosExistentes, ...nuevasUrls] })
+        .eq("id", motoEditando.id);
+
+      setGuardandoMoto(false);
+      limpiarFormulario();
+      avisar("✓ Publicación actualizada.");
+      cargarTodo();
+      return;
+    }
+
+    // ----- Modo alta: creo una publicación nueva -----
     const { data: nueva, error } = await supabase
       .from("motos")
       .insert({
@@ -222,8 +322,7 @@ export default function Garage() {
     }
 
     setGuardandoMoto(false);
-    setModeloSel(null); setAnio(""); setKm(""); setPrecio(""); setDominio(""); setArchivos([]);
-    setAccesoriosSel([]); setOtroAccesorio("");
+    limpiarFormulario();
     avisar("🎉 ¡Moto cargada! Ya está en el motor de matching.");
     cargarTodo();
   }
@@ -340,8 +439,14 @@ export default function Garage() {
                         <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-[#FDF1E3] text-ambar">Pausada</span>
                       )}
                       <button
+                        onClick={() => editarMoto(m)}
+                        className="ml-auto text-xs font-bold text-rojo hover:underline"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
                         onClick={() => pausarMoto(m)}
-                        className="ml-auto text-xs font-semibold text-gris hover:text-rojo"
+                        className="text-xs font-semibold text-gris hover:text-rojo"
                       >
                         {m.estado === "activa" ? "Pausar" : "Reactivar"}
                       </button>
@@ -355,10 +460,14 @@ export default function Garage() {
 
         <div className="grid gap-8 lg:grid-cols-2 items-start">
           {/* ---------- CARGAR MOTO ---------- */}
-          <section className="bg-white border border-linea rounded-2xl shadow-sm p-6">
-            <h2 className="font-titulos font-extrabold text-xl mb-1">➕ Cargar una moto</h2>
+          <section ref={formRef} className={`bg-white border rounded-2xl shadow-sm p-6 ${motoEditando ? "border-rojo border-2" : "border-linea"}`}>
+            <h2 className="font-titulos font-extrabold text-xl mb-1">
+              {motoEditando ? "✏️ Editar publicación" : "➕ Cargar una moto"}
+            </h2>
             <p className="text-sm text-gris mb-5">
-              Elegí el modelo del catálogo — así el matching nunca falla.
+              {motoEditando
+                ? `Estás editando tu ${nombreModelo(motoEditando.modelo_id)}. Cambiá lo que quieras y guardá.`
+                : "Elegí el modelo del catálogo — así el matching nunca falla."}
             </p>
             <form onSubmit={guardarMoto} className="flex flex-col gap-4">
               <div>
@@ -513,8 +622,34 @@ export default function Garage() {
                   </button>
                 </div>
               </div>
+              {motoEditando && fotosExistentes.length > 0 && (
+                <div className="text-sm font-semibold">
+                  Fotos actuales — tocá la ✕ para sacar una
+                  <div className="flex flex-wrap gap-2.5 mt-2">
+                    {fotosExistentes.map((u) => (
+                      <div key={u} className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={u} alt="" className="h-16 w-16 object-cover rounded-lg border border-linea" />
+                        <button
+                          type="button"
+                          onClick={() => setFotosExistentes(fotosExistentes.filter((x) => x !== u))}
+                          className="absolute -top-1.5 -right-1.5 bg-rojo text-white rounded-full w-5 h-5 text-[11px] font-bold leading-none shadow"
+                          aria-label="Sacar esta foto"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gris font-normal mt-1.5">
+                    La foto se borra recién cuando tocás «Guardar cambios».
+                  </p>
+                </div>
+              )}
               <label className="text-sm font-semibold">
-                Fotos (hasta 6 — se comprimen solas)
+                {motoEditando
+                  ? `Agregar fotos nuevas (quedan ${Math.max(0, 6 - fotosExistentes.length)} lugares)`
+                  : "Fotos (hasta 6 — se comprimen solas)"}
                 <input type="file" accept="image/*" multiple
                   onChange={(e) => setArchivos(Array.from(e.target.files || []))}
                   className="mt-1 w-full text-sm font-normal file:mr-3 file:rounded-lg file:border-0 file:bg-asfalto file:text-white file:px-4 file:py-2 file:font-semibold" />
@@ -522,10 +657,18 @@ export default function Garage() {
                   <span className="text-xs text-verde-ok font-normal">{archivos.length} foto(s) lista(s) para subir</span>
                 )}
               </label>
-              <button disabled={guardandoMoto}
-                className="bg-rojo hover:bg-rojo-oscuro text-white font-titulos font-extrabold rounded-xl py-3 disabled:opacity-60">
-                {guardandoMoto ? "Guardando…" : "Cargar mi moto →"}
-              </button>
+              <div className="flex gap-3">
+                {motoEditando && (
+                  <button type="button" onClick={limpiarFormulario}
+                    className="flex-1 border-2 border-linea rounded-xl py-3 text-sm font-semibold text-tinta2 hover:border-gris">
+                    Cancelar
+                  </button>
+                )}
+                <button disabled={guardandoMoto}
+                  className="flex-[2] bg-rojo hover:bg-rojo-oscuro text-white font-titulos font-extrabold rounded-xl py-3 disabled:opacity-60">
+                  {guardandoMoto ? "Guardando…" : motoEditando ? "Guardar cambios" : "Cargar mi moto →"}
+                </button>
+              </div>
             </form>
           </section>
 
