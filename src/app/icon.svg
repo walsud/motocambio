@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Isotipo Motocambio: dos flechas que se persiguen — la permuta. -->
+  <defs>
+    <marker id="f" markerWidth="12" markerHeight="12" refX="4.5" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L11,6 L0,12 Z" fill="#fff"/>
+    </marker>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#C8102E"/>
+  <path d="M18.1,22.3 A17,17 0 0 1 45.9,22.3" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" marker-end="url(#f)"/>
+  <path d="M45.9,41.7 A17,17 0 0 1 18.1,41.7" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" marker-end="url(#f)"/>
+</svg>
