@@ -71,6 +71,11 @@ function FormularioLogin() {
             className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
           />
         </label>
+        <p className="text-right -mt-2">
+          <Link href="/recuperar" className="text-[13px] text-gris hover:text-rojo font-semibold">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
         {error && (
           <p className="text-sm text-rojo bg-[#FBF0F1] border border-[#EED2D6] rounded-lg px-3 py-2">
             {error}

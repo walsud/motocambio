@@ -19,11 +19,13 @@ export default function Registro() {
   const [password, setPassword] = useState("");
   const [aceptaTyc, setAceptaTyc] = useState(false);
   const [error, setError] = useState("");
+  const [yaExiste, setYaExiste] = useState(false);
   const [cargando, setCargando] = useState(false);
 
   async function registrar(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setYaExiste(false);
     if (!aceptaTyc) {
       setError("Tenés que aceptar los Términos y Condiciones para registrarte.");
       return;
@@ -34,7 +36,7 @@ export default function Registro() {
     }
     setCargando(true);
     const supabase = crearClienteNavegador();
-    const { error: err } = await supabase.auth.signUp({
+    const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -44,11 +46,17 @@ export default function Registro() {
     });
     setCargando(false);
     if (err) {
-      setError(
-        err.message.includes("already registered")
-          ? "Ese e-mail ya está registrado. Probá ingresar."
-          : "No pudimos crear la cuenta: " + err.message
-      );
+      if (err.message.includes("already registered")) {
+        setYaExiste(true);
+      } else {
+        setError("No pudimos crear la cuenta: " + err.message);
+      }
+      return;
+    }
+    // Cuando el mail ya tiene cuenta confirmada, Supabase no devuelve error
+    // (para no regalar información), pero sí un usuario sin identidades.
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      setYaExiste(true);
       return;
     }
     router.push("/verificar?email=" + encodeURIComponent(email));
@@ -128,6 +136,25 @@ export default function Registro() {
               corren por cuenta de las partes.
             </span>
           </label>
+          {yaExiste && (
+            <div className="text-sm bg-[#FDF1E3] border border-[#EFD9BB] rounded-lg px-4 py-3 text-tinta2">
+              ⚠️ <b>Ya existe una cuenta con ese e-mail.</b>
+              <div className="flex gap-2 mt-2.5">
+                <Link
+                  href="/login"
+                  className="flex-1 text-center bg-rojo text-white font-semibold rounded-lg px-3 py-2"
+                >
+                  Ingresar
+                </Link>
+                <Link
+                  href="/recuperar"
+                  className="flex-1 text-center border-2 border-linea bg-white font-semibold rounded-lg px-3 py-2 hover:border-rojo"
+                >
+                  Recuperar contraseña
+                </Link>
+              </div>
+            </div>
+          )}
           {error && (
             <p className="text-sm text-rojo bg-[#FBF0F1] border border-[#EED2D6] rounded-lg px-3 py-2">
               {error}
