@@ -36,6 +36,26 @@ interface BusquedaModelo {
   modelo_id: number;
 }
 
+interface MatchInfo {
+  match_id: string;
+  tipo: string;
+  estado: string;
+  creado_el: string;
+  diferencia: number | null;
+  mi_moto_id: string;
+  mi_moto: string;
+  otra_moto_id: string;
+  otra_marca: string;
+  otra_modelo: string;
+  otra_anio: number;
+  otra_km: number;
+  otra_precio: number | null;
+  otra_provincia: string | null;
+  otra_fotos: string[];
+  otra_accesorios: string[];
+  otro_nombre: string;
+}
+
 // Comprime una foto en el navegador antes de subirla (máx 1280px, JPEG)
 async function comprimirFoto(archivo: File): Promise<Blob> {
   const img = document.createElement("img");
@@ -63,6 +83,7 @@ export default function Garage() {
   const [catalogo, setCatalogo] = useState<ModeloCatalogo[]>([]);
   const [errorCatalogo, setErrorCatalogo] = useState("");
   const [motos, setMotos] = useState<Moto[]>([]);
+  const [matches, setMatches] = useState<MatchInfo[]>([]);
   const [aviso, setAviso] = useState("");
 
   // --- formulario de alta de moto ---
@@ -131,15 +152,18 @@ export default function Garage() {
     if (!user) return;
     setUserId(user.id);
 
-    const [perfilR, motosR, busR] = await Promise.all([
+    const [perfilR, motosR, busR, matchesR] = await Promise.all([
       supabase.from("perfiles").select("nombre").eq("id", user.id).single(),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
+      supabase.rpc("mis_matches"),
     ]);
 
     if (perfilR.data) setNombre(perfilR.data.nombre);
     if (motosR.error) console.error("[Motocambio] Error cargando motos:", motosR.error);
     setMotos((motosR.data as Moto[]) || []);
+    if (matchesR.error) console.error("[Motocambio] Error cargando matches:", matchesR.error);
+    setMatches((matchesR.data as MatchInfo[]) || []);
 
     const b = busR.data?.[0];
     if (b) {
@@ -269,6 +293,7 @@ export default function Garage() {
       setGuardandoMoto(false);
       limpiarFormulario();
       avisar("✓ Publicación actualizada.");
+      fetch("/api/notificar-matches", { method: "POST" }).catch(() => {});
       cargarTodo();
       return;
     }
@@ -324,6 +349,7 @@ export default function Garage() {
     setGuardandoMoto(false);
     limpiarFormulario();
     avisar("🎉 ¡Moto cargada! Ya está en el motor de matching.");
+    fetch("/api/notificar-matches", { method: "POST" }).catch(() => {});
     cargarTodo();
   }
 
@@ -361,6 +387,8 @@ export default function Garage() {
           aceptos.map((d) => ({ busqueda_id: nueva.id, descripcion: d }))
         );
       avisar("✓ Búsqueda guardada. El matching ya está cruzando tus datos.");
+      fetch("/api/notificar-matches", { method: "POST" }).catch(() => {});
+      cargarTodo();
     } else {
       avisar("No se pudo guardar la búsqueda: " + (error?.message || "error"));
     }
@@ -396,6 +424,61 @@ export default function Garage() {
             </button>
           </div>
         )}
+
+        {/* ---------- TUS MATCHES ---------- */}
+        <section className="mb-10">
+          <h2 className="font-titulos font-extrabold text-xl mb-3">💘 Tus matches</h2>
+          {matches.length === 0 ? (
+            <p className="text-sm text-gris bg-white border border-linea rounded-xl p-5">
+              Todavía no hay matches. Apenas aparezca una moto que buscás cuyo dueño
+              se interese por la tuya, la vas a ver acá — y te avisamos por mail.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {matches.map((mt) => (
+                <div key={mt.match_id} className={`bg-white border-2 rounded-2xl overflow-hidden shadow-sm ${
+                  mt.tipo === "directo" ? "border-verde-ok" : "border-linea"
+                }`}>
+                  {mt.otra_fotos?.length ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={mt.otra_fotos[0]} alt="" className="h-36 w-full object-cover" />
+                  ) : (
+                    <div className="h-36 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
+                  )}
+                  <div className="p-4">
+                    <span className={`text-[11px] font-bold rounded-full px-2.5 py-0.5 ${
+                      mt.tipo === "directo" ? "bg-[#E9F7EF] text-verde-ok" : "bg-[#FDF1E3] text-ambar"
+                    }`}>
+                      {mt.tipo === "directo" ? "🎯 Match directo" : "👀 Interés parcial"}
+                    </span>
+                    <h3 className="font-titulos font-extrabold text-[15px] mt-2">
+                      {mt.otra_marca} {mt.otra_modelo} · {mt.otra_anio}
+                    </h3>
+                    <p className="text-xs text-gris mt-0.5">
+                      {mt.otra_km.toLocaleString("es-AR")} km · {mt.otra_provincia}
+                      {mt.otra_precio ? ` · USD ${Number(mt.otra_precio).toLocaleString("es-AR")}` : ""}
+                    </p>
+                    <p className="text-xs text-tinta2 mt-1.5">
+                      De <b>{mt.otro_nombre}</b> — por tu <b>{mt.mi_moto}</b>
+                      {mt.diferencia != null && Number(mt.diferencia) > 0
+                        ? ` · dif. estimada USD ${Number(mt.diferencia).toLocaleString("es-AR")}`
+                        : ""}
+                    </p>
+                    {mt.otra_accesorios?.length > 0 && (
+                      <p className="text-[11px] text-tinta2 mt-1.5 bg-hueso rounded-lg px-2 py-1">
+                        🧰 {mt.otra_accesorios.slice(0, 3).join(" · ")}
+                        {mt.otra_accesorios.length > 3 ? ` · +${mt.otra_accesorios.length - 3} más` : ""}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-gris mt-2">
+                      El chat entre ustedes llega en la próxima etapa 💬
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* ---------- MIS MOTOS ---------- */}
         <section className="mb-10">
