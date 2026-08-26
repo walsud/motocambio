@@ -10,7 +10,7 @@ export function HeaderApp({
   logueado = true,
 }: {
   nombre?: string;
-  activo?: "garage" | "explorar";
+  activo?: "garage" | "explorar" | "oportunidades";
   logueado?: boolean;
 }) {
   const router = useRouter();
@@ -39,6 +39,9 @@ export function HeaderApp({
         <nav className="flex items-center gap-1 ml-2">
           <Link href="/explorar" className={tab(activo === "explorar")}>
             Explorar
+          </Link>
+          <Link href="/oportunidades" className={tab(activo === "oportunidades")}>
+            💰<span className="hidden sm:inline"> Oportunidades</span>
           </Link>
           <Link href="/garage" className={tab(activo === "garage")}>
             Mi garage

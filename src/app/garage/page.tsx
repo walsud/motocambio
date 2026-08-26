@@ -37,6 +37,20 @@ interface BusquedaModelo {
   modelo_id: number;
 }
 
+interface Oportunidad {
+  id: string;
+  moto_id: string;
+  precio_contado: number;
+  motivo: string | null;
+  vence_el: string;
+  aprobada: boolean;
+}
+
+interface RefPrecio {
+  ref_min: number;
+  ref_max: number;
+}
+
 interface MatchInfo {
   match_id: string;
   tipo: string;
@@ -87,7 +101,16 @@ export default function Garage() {
   const [errorCatalogo, setErrorCatalogo] = useState("");
   const [motos, setMotos] = useState<Moto[]>([]);
   const [matches, setMatches] = useState<MatchInfo[]>([]);
+  const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [aviso, setAviso] = useState("");
+
+  // --- formulario de oportunidad (venta de contado) ---
+  const [opFormMoto, setOpFormMoto] = useState<string | null>(null);
+  const [opPrecio, setOpPrecio] = useState("");
+  const [opMotivo, setOpMotivo] = useState("");
+  const [opRef, setOpRef] = useState<RefPrecio | null>(null);
+  const [opRefCargada, setOpRefCargada] = useState(false);
+  const [guardandoOp, setGuardandoOp] = useState(false);
 
   // --- formulario de alta de moto ---
   const [modeloSel, setModeloSel] = useState<ModeloCatalogo | null>(null);
@@ -155,12 +178,18 @@ export default function Garage() {
     if (!user) return;
     setUserId(user.id);
 
-    const [perfilR, motosR, busR, matchesR] = await Promise.all([
+    const [perfilR, motosR, busR, matchesR, opsR] = await Promise.all([
       supabase.from("perfiles").select("nombre").eq("id", user.id).single(),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
       supabase.rpc("mis_matches"),
+      supabase.from("oportunidades").select("*"),
     ]);
+
+    const misMotoIds = ((motosR.data as Moto[]) || []).map((m) => m.id);
+    setOportunidades(
+      ((opsR.data as Oportunidad[]) || []).filter((o) => misMotoIds.includes(o.moto_id))
+    );
 
     if (perfilR.data) setNombre(perfilR.data.nombre);
     if (motosR.error) console.error("[Motocambio] Error cargando motos:", motosR.error);
@@ -353,6 +382,55 @@ export default function Garage() {
     limpiarFormulario();
     avisar("🎉 ¡Moto cargada! Ya está en el motor de matching.");
     fetch("/api/notificar-matches", { method: "POST" }).catch(() => {});
+    cargarTodo();
+  }
+
+  // ---------- OPORTUNIDADES (venta de contado) ----------
+  async function abrirFormOp(m: Moto) {
+    setOpFormMoto(m.id);
+    setOpPrecio("");
+    setOpMotivo("");
+    setOpRef(null);
+    setOpRefCargada(false);
+    const { data } = await supabase
+      .from("referencias_precio")
+      .select("ref_min, ref_max")
+      .eq("modelo_id", m.modelo_id)
+      .eq("anio", m.anio)
+      .maybeSingle();
+    setOpRef((data as RefPrecio) || null);
+    setOpRefCargada(true);
+  }
+
+  async function guardarOportunidad(m: Moto) {
+    if (!opPrecio) return;
+    setGuardandoOp(true);
+    const { error } = await supabase.from("oportunidades").insert({
+      moto_id: m.id,
+      precio_contado: parseInt(opPrecio),
+      motivo: opMotivo.trim() || null,
+    });
+    setGuardandoOp(false);
+    if (error) {
+      avisar(
+        error.message.includes("por debajo de la referencia")
+          ? error.message.replace(/^.*?Para/, "Para")
+          : "No se pudo publicar: " + error.message
+      );
+      return;
+    }
+    setOpFormMoto(null);
+    avisar(
+      opRef
+        ? "💰 ¡Publicada en Oportunidades! Dura 14 días."
+        : "💰 Enviada. Como este modelo no tiene precio de referencia todavía, la revisamos y la aprobamos a mano."
+    );
+    cargarTodo();
+  }
+
+  async function quitarOportunidad(op: Oportunidad) {
+    await supabase.from("oportunidades").delete().eq("id", op.id);
+    avisar("Oportunidad dada de baja.");
     cargarTodo();
   }
 
@@ -557,6 +635,79 @@ export default function Garage() {
                         {m.estado === "activa" ? "Pausar" : "Reactivar"}
                       </button>
                     </div>
+
+                    {/* --- Oportunidad (venta de contado) --- */}
+                    {(() => {
+                      const op = oportunidades.find((o) => o.moto_id === m.id);
+                      if (op) {
+                        const dias = Math.max(0, Math.ceil((new Date(op.vence_el + "T23:59:59").getTime() - Date.now()) / 86400000));
+                        return (
+                          <div className={`mt-2.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold flex items-center gap-2 flex-wrap ${
+                            op.aprobada ? "bg-[#E9F7EF] text-verde-ok" : "bg-[#FDF1E3] text-ambar"
+                          }`}>
+                            <span>
+                              💰 {op.aprobada
+                                ? `En Oportunidades · USD ${Number(op.precio_contado).toLocaleString("es-AR")} · ⏳ ${dias} día${dias !== 1 ? "s" : ""}`
+                                : `Pendiente de revisión · USD ${Number(op.precio_contado).toLocaleString("es-AR")}`}
+                            </span>
+                            <button onClick={() => quitarOportunidad(op)} className="ml-auto text-rojo font-bold hover:underline">
+                              Quitar
+                            </button>
+                          </div>
+                        );
+                      }
+                      if (m.estado !== "activa") return null;
+                      if (opFormMoto === m.id) {
+                        return (
+                          <div className="mt-2.5 bg-hueso rounded-xl p-3">
+                            <p className="text-xs font-bold text-tinta2">💰 Vender de contado en Oportunidades</p>
+                            <p className="text-[11px] text-gris mt-0.5">
+                              {!opRefCargada
+                                ? "Buscando el precio de referencia…"
+                                : opRef
+                                ? `Referencia: USD ${Number(opRef.ref_min).toLocaleString("es-AR")} – ${Number(opRef.ref_max).toLocaleString("es-AR")}. Para entrar tiene que ser menor a USD ${Number(opRef.ref_min).toLocaleString("es-AR")}.`
+                                : "Este modelo/año no tiene referencia todavía: la revisamos a mano antes de publicarla."}
+                            </p>
+                            <input
+                              type="number" min={1} value={opPrecio}
+                              onChange={(e) => setOpPrecio(e.target.value)}
+                              placeholder="Precio de contado (USD)"
+                              className="mt-2 w-full border-2 border-linea rounded-lg px-3 py-2 text-sm bg-white outline-none focus:border-rojo"
+                            />
+                            <input
+                              value={opMotivo}
+                              onChange={(e) => setOpMotivo(e.target.value)}
+                              placeholder="Motivo (opcional — ej.: me voy del país)"
+                              maxLength={120}
+                              className="mt-2 w-full border-2 border-linea rounded-lg px-3 py-2 text-sm bg-white outline-none focus:border-rojo"
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => guardarOportunidad(m)}
+                                disabled={guardandoOp || !opPrecio}
+                                className="flex-1 bg-rojo text-white text-xs font-bold rounded-lg py-2 disabled:opacity-50"
+                              >
+                                {guardandoOp ? "Publicando…" : "Publicar"}
+                              </button>
+                              <button
+                                onClick={() => setOpFormMoto(null)}
+                                className="flex-1 border-2 border-linea text-xs font-semibold rounded-lg py-2 text-tinta2 bg-white"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => abrirFormOp(m)}
+                          className="mt-2.5 w-full text-[11px] font-bold text-tinta2 border border-linea rounded-lg py-1.5 hover:border-verde-ok hover:text-verde-ok"
+                        >
+                          💰 Vender de contado en Oportunidades
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
