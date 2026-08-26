@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Logo, Wordmark } from "@/components/Logo";
+import { RescateCodigo } from "@/components/RescateCodigo";
 
 export default function Inicio() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center bg-gradient-to-br from-asfalto via-[#23233B] to-[#3A1F2B] text-white">
+      <RescateCodigo />
       <Logo tamano={84} />
       <div>
         <Wordmark />
