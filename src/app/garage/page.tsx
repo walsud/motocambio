@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
@@ -54,6 +55,7 @@ interface MatchInfo {
   otra_fotos: string[];
   otra_accesorios: string[];
   otro_nombre: string;
+  no_leidos: number;
 }
 
 // Comprime una foto en el navegador antes de subirla (máx 1280px, JPEG)
@@ -470,9 +472,17 @@ export default function Garage() {
                         {mt.otra_accesorios.length > 3 ? ` · +${mt.otra_accesorios.length - 3} más` : ""}
                       </p>
                     )}
-                    <p className="text-[11px] text-gris mt-2">
-                      El chat entre ustedes llega en la próxima etapa 💬
-                    </p>
+                    <Link
+                      href={`/match/${mt.match_id}`}
+                      className="mt-3 flex items-center justify-center gap-2 bg-asfalto hover:opacity-90 text-white text-sm font-titulos font-extrabold rounded-xl py-2.5"
+                    >
+                      💬 {Number(mt.no_leidos) > 0 ? "Responder" : "Chatear"}
+                      {Number(mt.no_leidos) > 0 && (
+                        <span className="bg-rojo text-white text-[11px] font-bold rounded-full px-2 py-0.5">
+                          {mt.no_leidos} nuevo{Number(mt.no_leidos) > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </Link>
                   </div>
                 </div>
               ))}
