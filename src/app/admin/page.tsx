@@ -40,6 +40,16 @@ interface OpPendiente {
   creada: string;
 }
 
+interface ConcesActivo {
+  id: string;
+  nombre: string;
+  cuit: string | null;
+  telefono: string | null;
+  provincia: string | null;
+  email: string;
+  motos_activas: number;
+}
+
 interface Denuncia {
   id: number;
   motivo: string;
@@ -55,19 +65,23 @@ export default function Admin() {
   const [nombre, setNombre] = useState<string | undefined>();
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [conces, setConces] = useState<ConcesPendiente[]>([]);
+  const [concesActivos, setConcesActivos] = useState<ConcesActivo[]>([]);
   const [ops, setOps] = useState<OpPendiente[]>([]);
   const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
+  const [revocando, setRevocando] = useState<string | null>(null);
   const [aviso, setAviso] = useState("");
 
   const cargar = useCallback(async () => {
-    const [r, c, o, d] = await Promise.all([
+    const [r, c, ca, o, d] = await Promise.all([
       supabase.rpc("admin_resumen"),
       supabase.rpc("admin_concesionarios_pendientes"),
+      supabase.rpc("admin_concesionarios_activos"),
       supabase.rpc("admin_oportunidades_pendientes"),
       supabase.rpc("admin_denuncias_pendientes"),
     ]);
     setResumen((r.data as Resumen) || null);
     setConces((c.data as ConcesPendiente[]) || []);
+    setConcesActivos((ca.data as ConcesActivo[]) || []);
     setOps((o.data as OpPendiente[]) || []);
     setDenuncias((d.data as Denuncia[]) || []);
   }, [supabase]);
@@ -95,6 +109,13 @@ export default function Admin() {
   async function aprobarConces(c: ConcesPendiente) {
     await supabase.rpc("admin_aprobar_concesionario", { p_id: c.id });
     avisar(`✓ ${c.nombre} aprobado como concesionario.`);
+    cargar();
+  }
+
+  async function revocarConces(c: ConcesActivo) {
+    await supabase.rpc("admin_revocar_concesionario", { p_id: c.id });
+    setRevocando(null);
+    avisar(`${c.nombre} dado de baja como concesionario (su cuenta sigue como particular).`);
     cargar();
   }
 
@@ -191,6 +212,45 @@ export default function Admin() {
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Concesionarios activos */}
+            {concesActivos.length > 0 && (
+              <>
+                <h2 className="font-titulos font-extrabold text-xl mt-8 mb-3">
+                  🏪 Concesionarios activos <span className="text-sm font-semibold text-gris">({concesActivos.length})</span>
+                </h2>
+                <div className="flex flex-col gap-2.5">
+                  {concesActivos.map((c) => (
+                    <div key={c.id} className="bg-white border border-linea rounded-2xl p-4 flex items-center gap-3 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-titulos font-extrabold text-[14px]">{c.nombre}</p>
+                        <p className="text-xs text-gris">
+                          CUIT {c.cuit || "—"} · {c.email} · {c.motos_activas} moto{Number(c.motos_activas) !== 1 ? "s" : ""} activa{Number(c.motos_activas) !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      {revocando === c.id ? (
+                        <>
+                          <span className="text-xs font-semibold text-tinta2">¿Seguro? Pierde insignia y leads.</span>
+                          <button onClick={() => revocarConces(c)}
+                            className="bg-rojo text-white text-xs font-bold rounded-xl px-4 py-2.5">
+                            Sí, dar de baja
+                          </button>
+                          <button onClick={() => setRevocando(null)}
+                            className="border-2 border-linea text-xs font-semibold rounded-xl px-4 py-2.5 text-tinta2">
+                            Cancelar
+                          </button>
+                        </>
+                      ) : (
+                        <button onClick={() => setRevocando(c.id)}
+                          className="border-2 border-linea text-xs font-semibold rounded-xl px-4 py-2.5 text-rojo hover:border-rojo">
+                          Dar de baja
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {/* Oportunidades pendientes */}

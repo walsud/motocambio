@@ -53,6 +53,16 @@ interface Demanda {
   publicadas: number;
 }
 
+interface Lead {
+  usuario_nombre: string;
+  usuario_provincia: string | null;
+  ofrece: string;
+  busca: string;
+  dif_max_pagar: number;
+  dif_min_recibir: number;
+  desde: string;
+}
+
 export default function Panel() {
   const supabase = crearClienteNavegador();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
@@ -61,6 +71,7 @@ export default function Panel() {
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [modelos, setModelos] = useState<ModeloMini[]>([]);
   const [demanda, setDemanda] = useState<Demanda[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [cargando, setCargando] = useState(true);
 
   // formulario de solicitud
@@ -88,6 +99,12 @@ export default function Panel() {
 
     const p = perfilR.data as Perfil | null;
     setPerfil(p);
+
+    // Leads: solo responde para concesionarios aprobados
+    if (p?.tipo === "concesionario" && p?.concesionario_aprobado) {
+      const { data: leadsD } = await supabase.rpc("leads_concesionario");
+      setLeads((leadsD as Lead[]) || []);
+    }
     if (p) setNombreComercial(p.nombre);
     const misMotos = (motosR.data as Moto[]) || [];
     setMotos(misMotos);
@@ -304,6 +321,55 @@ export default function Panel() {
                 })}
                 <p className="text-[10px] text-gris mt-1">
                   Fuente: búsquedas activas de usuarios registrados en Motocambio.
+                </p>
+              </div>
+            )}
+
+            {/* Leads */}
+            <h2 className="font-titulos font-extrabold text-xl mt-8 mb-1">
+              🔥 Leads: usuarios que buscan tu stock
+              {leads.length > 0 && (
+                <span className="ml-2 bg-rojo text-white text-xs rounded-full px-2 py-0.5 align-middle">{leads.length}</span>
+              )}
+            </h2>
+            <p className="text-xs text-gris mb-3">
+              Gente con búsquedas activas apuntando a modelos que tenés publicados:
+              qué ofrecen a cambio y qué diferencia manejan.
+            </p>
+            {!perfil?.concesionario_aprobado ? (
+              <p className="text-sm text-gris bg-white border border-linea rounded-xl p-4">
+                🔒 Los leads se activan cuando aprobemos tu cuenta de concesionario.
+              </p>
+            ) : leads.length === 0 ? (
+              <p className="text-sm text-gris bg-white border border-linea rounded-xl p-4">
+                Todavía nadie tiene búsquedas apuntando a tus modelos. Cuantas más
+                motos cargues, más chances de aparecer acá.
+              </p>
+            ) : (
+              <div className="bg-white border border-linea rounded-2xl overflow-hidden">
+                <div className="hidden sm:grid grid-cols-[1fr_1.4fr_1.2fr_0.8fr] gap-3 px-4 py-2.5 bg-hueso text-[11px] font-bold text-gris uppercase tracking-wide">
+                  <span>Usuario</span><span>Ofrece</span><span>Busca (tu stock)</span><span className="text-right">Dif. tope</span>
+                </div>
+                {leads.map((l, i) => (
+                  <div key={i} className="grid sm:grid-cols-[1fr_1.4fr_1.2fr_0.8fr] gap-1 sm:gap-3 px-4 py-3 border-t border-linea text-[13px]">
+                    <span className="font-bold">
+                      {l.usuario_nombre}
+                      {l.usuario_provincia && <span className="text-gris font-normal"> · {l.usuario_provincia}</span>}
+                    </span>
+                    <span className="text-tinta2">🏍️ {l.ofrece}</span>
+                    <span className="text-tinta2">🎯 {l.busca}</span>
+                    <span className="sm:text-right font-semibold">
+                      {Number(l.dif_max_pagar) > 0
+                        ? `USD ${Number(l.dif_max_pagar).toLocaleString("es-AR")}`
+                        : Number(l.dif_min_recibir) > 0
+                        ? `pide USD ${Number(l.dif_min_recibir).toLocaleString("es-AR")}`
+                        : "—"}
+                    </span>
+                  </div>
+                ))}
+                <p className="px-4 py-2.5 border-t border-linea text-[10px] text-gris">
+                  Sin datos de contacto: cargá o mantené publicadas las motos que buscan
+                  y el matching los conecta con vos por el canal normal.
                 </p>
               </div>
             )}
