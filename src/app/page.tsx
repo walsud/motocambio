@@ -116,7 +116,7 @@ export default function Inicio() {
   return (
     <div className="min-h-screen bg-hueso">
       <RescateCodigo />
-      <HeaderApp logueado={logueado} />
+      <HeaderApp logueado={logueado} activo="inicio" />
 
       {/* ---------- HÉROE ---------- */}
       <section className="bg-gradient-to-br from-asfalto via-[#23233B] to-[#3A1F2B] text-white">

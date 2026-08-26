@@ -98,6 +98,7 @@ export default function Garage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
   const [tipoPerfil, setTipoPerfil] = useState("particular");
+  const [esAdmin, setEsAdmin] = useState(false);
   const [catalogo, setCatalogo] = useState<ModeloCatalogo[]>([]);
   const [errorCatalogo, setErrorCatalogo] = useState("");
   const [motos, setMotos] = useState<Moto[]>([]);
@@ -180,7 +181,7 @@ export default function Garage() {
     setUserId(user.id);
 
     const [perfilR, motosR, busR, matchesR, opsR] = await Promise.all([
-      supabase.from("perfiles").select("nombre, tipo").eq("id", user.id).single(),
+      supabase.from("perfiles").select("nombre, tipo, es_admin").eq("id", user.id).single(),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
       supabase.rpc("mis_matches"),
@@ -195,6 +196,7 @@ export default function Garage() {
     if (perfilR.data) {
       setNombre(perfilR.data.nombre);
       setTipoPerfil(perfilR.data.tipo || "particular");
+      setEsAdmin(!!perfilR.data.es_admin);
     }
     if (motosR.error) console.error("[Motocambio] Error cargando motos:", motosR.error);
     setMotos((motosR.data as Moto[]) || []);
@@ -482,7 +484,7 @@ export default function Garage() {
 
   return (
     <div className="min-h-screen bg-hueso">
-      <HeaderApp nombre={nombre} activo="garage" esConcesionario={tipoPerfil === "concesionario"} />
+      <HeaderApp nombre={nombre} activo="garage" esConcesionario={tipoPerfil === "concesionario"} esAdmin={esAdmin} />
       <main className="max-w-5xl mx-auto px-4 py-8 pb-24">
         <h1 className="font-titulos font-black text-3xl tracking-tight">Mi garage</h1>
         <p className="text-gris mt-1 mb-7">
