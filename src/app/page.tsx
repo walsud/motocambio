@@ -33,8 +33,14 @@ export default function Inicio() {
           Ingresar
         </Link>
       </div>
+      <Link
+        href="/explorar"
+        className="text-sm font-semibold text-[#C9C9D9] underline underline-offset-4 hover:text-white"
+      >
+        👀 Chusmear las motos publicadas
+      </Link>
       <p className="text-xs text-[#8A8A9E] uppercase tracking-widest font-bold">
-        Semana 3 de desarrollo · motocambio.com.ar
+        Beta en construcción · motocambio.com.ar
       </p>
     </main>
   );
