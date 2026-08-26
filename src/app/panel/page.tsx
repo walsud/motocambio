@@ -303,11 +303,11 @@ export default function Panel() {
               </div>
             )}
 
-            <p className="text-[11px] text-gris mt-6">
-              🎁 Plan Concesionario bonificado durante la beta cerrada. Cuando
-              arranque el plan pago te vamos a avisar con tiempo — los primeros
-              concesionarios tienen precio de fundador.
-            </p>
+            <div className="mt-6 bg-[#E9F7EF] border border-[#CDE4D4] rounded-2xl p-4 text-sm text-tinta2">
+              🎁 <b>Plan Concesionario bonificado durante la beta cerrada.</b>{" "}
+              Cuando arranque el plan pago te vamos a avisar con tiempo — los
+              primeros concesionarios tienen precio de fundador.
+            </div>
           </>
         )}
       </main>

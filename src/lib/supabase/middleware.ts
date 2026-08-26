@@ -33,7 +33,7 @@ export async function actualizarSesion(request: NextRequest) {
   const ruta = request.nextUrl.pathname;
 
   // Rutas privadas: requieren sesión
-  if (!user && (ruta.startsWith("/garage") || ruta.startsWith("/match") || ruta.startsWith("/panel"))) {
+  if (!user && (ruta.startsWith("/garage") || ruta.startsWith("/match") || ruta.startsWith("/panel") || ruta.startsWith("/admin"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

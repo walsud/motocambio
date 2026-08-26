@@ -1023,12 +1023,21 @@ export default function Garage() {
         </div>
 
         {tipoPerfil !== "concesionario" && (
-          <p className="text-xs text-gris text-center mt-10">
-            ¿Tenés un local de motos?{" "}
-            <Link href="/panel" className="text-rojo font-bold">
+          <div className="mt-10 bg-asfalto text-white rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-titulos font-extrabold text-lg">🏪 ¿Tenés un local de motos?</p>
+              <p className="text-sm text-[#C9C9D9] mt-0.5">
+                Insignia de confianza, todo tu stock en el matching y estadísticas por moto.
+                Bonificado durante la beta.
+              </p>
+            </div>
+            <Link
+              href="/panel"
+              className="bg-rojo hover:bg-rojo-oscuro text-white font-titulos font-extrabold rounded-xl px-6 py-3"
+            >
               Conocé el panel de concesionarios →
             </Link>
-          </p>
+          </div>
         )}
       </main>
     </div>
