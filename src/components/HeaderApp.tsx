@@ -50,7 +50,7 @@ export function HeaderApp({
     <>
       <header className="sticky top-0 z-40 bg-white border-b border-linea">
         <div className="max-w-5xl mx-auto flex items-center gap-4 px-4 py-2.5">
-          <Link href={logueado ? "/garage" : "/"} className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <Logo tamano={30} />
             <Wordmark />
           </Link>
