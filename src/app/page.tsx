@@ -176,6 +176,51 @@ export default function Inicio() {
           </div>
         </section>
 
+        {/* ---------- POR QUÉ MOTOCAMBIO ---------- */}
+        <section className="pb-12">
+          <h2 className="font-titulos font-black text-3xl tracking-tight text-center">
+            ¿Por qué Motocambio?
+          </h2>
+          <p className="text-gris text-sm text-center mt-1 mb-7">
+            Lo que ninguna página de avisos hace por vos.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="bg-asfalto text-white rounded-2xl p-6">
+              <p className="text-3xl">🎯</p>
+              <h3 className="font-titulos font-extrabold text-lg mt-3">Matching automático</h3>
+              <p className="text-sm text-[#C9C9D9] mt-2 leading-relaxed">
+                No esperás a que aparezca un comprador: el sistema cruza lo que{" "}
+                <b className="text-[#FF7A8E]">ofrecés</b> con lo que{" "}
+                <b className="text-[#FF7A8E]">buscás</b>, al instante, con cada
+                moto y cada búsqueda nueva que entra.
+              </p>
+            </div>
+            <div className="bg-asfalto text-white rounded-2xl p-6 relative">
+              <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wide bg-white/15 rounded-full px-2.5 py-1">
+                Próximamente
+              </span>
+              <p className="text-3xl">🔁</p>
+              <h3 className="font-titulos font-extrabold text-lg mt-3">Cambios en cadena</h3>
+              <p className="text-sm text-[#C9C9D9] mt-2 leading-relaxed">
+                Si el cambio no cierra entre dos, lo armamos{" "}
+                <b className="text-[#FF7A8E]">entre tres</b>: vos querés la de B,
+                B quiere la de C, C quiere la tuya. Todos reciben la moto que
+                buscan. En camino para esta beta.
+              </p>
+            </div>
+            <div className="bg-asfalto text-white rounded-2xl p-6">
+              <p className="text-3xl">🛡️</p>
+              <h3 className="font-titulos font-extrabold text-lg mt-3">Confianza cuidada</h3>
+              <p className="text-sm text-[#C9C9D9] mt-2 leading-relaxed">
+                Mail confirmado para operar, tus datos de contacto{" "}
+                <b className="text-[#FF7A8E]">nunca expuestos</b> hasta que haya
+                match, la patente siempre privada, y concesionarios con{" "}
+                <b className="text-[#FF7A8E]">CUIT verificado</b> uno por uno.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* ---------- MOTOS RECIENTES ---------- */}
         {motos.length > 0 && (
           <section className="pb-12">
