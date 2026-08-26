@@ -482,7 +482,7 @@ export default function Garage() {
 
   return (
     <div className="min-h-screen bg-hueso">
-      <HeaderApp nombre={nombre} esConcesionario={tipoPerfil === "concesionario"} />
+      <HeaderApp nombre={nombre} activo="garage" esConcesionario={tipoPerfil === "concesionario"} />
       <main className="max-w-5xl mx-auto px-4 py-8 pb-24">
         <h1 className="font-titulos font-black text-3xl tracking-tight">Mi garage</h1>
         <p className="text-gris mt-1 mb-7">

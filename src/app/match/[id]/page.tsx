@@ -134,7 +134,7 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-hueso flex flex-col">
-      <HeaderApp nombre={nombre} />
+      <HeaderApp nombre={nombre} activo="garage" />
       <main className="max-w-2xl mx-auto w-full px-4 py-4 flex flex-col flex-1">
         <Link href="/garage" className="text-sm font-semibold text-gris hover:text-rojo">
           ← Volver a mi garage

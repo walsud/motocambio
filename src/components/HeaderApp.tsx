@@ -6,7 +6,7 @@ import { Logo, Wordmark } from "@/components/Logo";
 
 export function HeaderApp({
   nombre,
-  activo = "garage",
+  activo,
   logueado = true,
   esConcesionario = false,
 }: {

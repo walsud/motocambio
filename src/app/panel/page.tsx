@@ -44,6 +44,15 @@ interface ModeloMini {
   modelo: string;
 }
 
+interface Demanda {
+  modelo_id: number;
+  marca: string;
+  modelo: string;
+  cilindrada: number;
+  busquedas: number;
+  publicadas: number;
+}
+
 export default function Panel() {
   const supabase = crearClienteNavegador();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
@@ -51,6 +60,7 @@ export default function Panel() {
   const [matches, setMatches] = useState<MatchInfo[]>([]);
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [modelos, setModelos] = useState<ModeloMini[]>([]);
+  const [demanda, setDemanda] = useState<Demanda[]>([]);
   const [cargando, setCargando] = useState(true);
 
   // formulario de solicitud
@@ -64,7 +74,7 @@ export default function Panel() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [perfilR, motosR, matchesR, opsR] = await Promise.all([
+    const [perfilR, motosR, matchesR, opsR, demandaR] = await Promise.all([
       supabase.from("perfiles")
         .select("nombre, tipo, cuit, telefono, concesionario_aprobado")
         .eq("id", user.id).single(),
@@ -72,7 +82,9 @@ export default function Panel() {
         .eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.rpc("mis_matches"),
       supabase.from("oportunidades").select("id, moto_id, aprobada, vence_el"),
+      supabase.rpc("modelos_mas_buscados", { p_dias: 30, p_limite: 10 }),
     ]);
+    setDemanda((demandaR.data as Demanda[]) || []);
 
     const p = perfilR.data as Perfil | null;
     setPerfil(p);
@@ -254,6 +266,47 @@ export default function Panel() {
                 </div>
               ))}
             </div>
+
+            {/* Modelos más buscados */}
+            <h2 className="font-titulos font-extrabold text-xl mt-8 mb-1">
+              📈 Modelos más buscados <span className="text-sm font-semibold text-gris">(últimos 30 días)</span>
+            </h2>
+            <p className="text-xs text-gris mb-3">
+              La demanda real: qué buscan los usuarios registrados, y cuántas unidades
+              publicadas hay de cada modelo. Donde hay más búsqueda que oferta, hay negocio.
+            </p>
+            {demanda.length === 0 ? (
+              <p className="text-sm text-gris bg-white border border-linea rounded-xl p-4">
+                Todavía hay pocas búsquedas cargadas. Este ranking se arma solo a medida
+                que entren usuarios.
+              </p>
+            ) : (
+              <div className="bg-white border border-linea rounded-2xl p-5 flex flex-col gap-2.5">
+                {demanda.map((d) => {
+                  const max = Number(demanda[0].busquedas) || 1;
+                  const ancho = Math.max(6, Math.round((Number(d.busquedas) / max) * 100));
+                  return (
+                    <div key={d.modelo_id} className="flex items-center gap-3">
+                      <span className="w-44 sm:w-56 text-[12px] font-semibold truncate shrink-0">
+                        {d.marca} {d.modelo}
+                      </span>
+                      <div className="flex-1 bg-hueso rounded-full h-5 overflow-hidden">
+                        <div
+                          className="h-5 bg-rojo rounded-full"
+                          style={{ width: `${ancho}%` }}
+                        />
+                      </div>
+                      <span className="w-32 text-right text-[11px] text-gris shrink-0">
+                        <b className="text-asfalto">{d.busquedas}</b> búsq. · {d.publicadas} publi.
+                      </span>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-gris mt-1">
+                  Fuente: búsquedas activas de usuarios registrados en Motocambio.
+                </p>
+              </div>
+            )}
 
             {/* Detalle por moto */}
             <h2 className="font-titulos font-extrabold text-xl mt-8 mb-3">Tu stock</h2>
