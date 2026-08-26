@@ -8,12 +8,14 @@ import { HeaderApp } from "@/components/HeaderApp";
 interface MatchInfo {
   match_id: string;
   tipo: string;
+  estado: string;
   mi_moto: string;
   otra_marca: string;
   otra_modelo: string;
   otra_anio: number;
   otra_fotos: string[];
   otro_nombre: string;
+  concretado_por: string | null;
 }
 
 interface Mensaje {
@@ -33,6 +35,8 @@ export default function Chat() {
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+  const [marcando, setMarcando] = useState(false);
   const finRef = useRef<HTMLDivElement>(null);
   const cantidadRef = useRef(0);
 
@@ -86,6 +90,22 @@ export default function Chat() {
       finRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [mensajes]);
+
+  async function recargarMatch() {
+    const { data } = await supabase.rpc("mis_matches");
+    const m = ((data as MatchInfo[]) || []).find((x) => x.match_id === id);
+    setMatch(m || null);
+  }
+
+  async function marcarConcretado() {
+    if (marcando) return;
+    setMarcando(true);
+    setConfirmando(false);
+    const { error } = await supabase.rpc("marcar_concretado", { p_match: id });
+    if (error) console.error("[Motocambio] Error marcando concretado:", error);
+    await recargarMatch();
+    setMarcando(false);
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -147,6 +167,65 @@ export default function Chat() {
                 </p>
               </div>
             </div>
+
+            {/* Estado del cambio */}
+            {match.estado === "concretado" ? (
+              <div className="mt-2 bg-[#E9F7EF] border border-[#CDE4D4] rounded-2xl p-4 text-center">
+                <p className="font-titulos font-extrabold text-verde-ok">
+                  🤝 ¡Cambio concretado! Felicitaciones 🎉
+                </p>
+                <p className="text-xs text-tinta2 mt-1">
+                  Las dos motos fueron dadas de baja de la plataforma. Pueden seguir
+                  usando este chat para coordinar la entrega y la transferencia.
+                </p>
+              </div>
+            ) : match.estado === "aceptado_por_uno" && match.concretado_por === userId ? (
+              <div className="mt-2 bg-[#FDF1E3] border border-[#EFD9BB] rounded-2xl p-3.5 text-center">
+                <p className="text-sm font-semibold text-ambar">
+                  🤝 Marcaste el cambio como concretado. Esperando que {match.otro_nombre} confirme.
+                </p>
+              </div>
+            ) : match.estado === "aceptado_por_uno" ? (
+              <div className="mt-2 bg-[#E9F7EF] border-2 border-verde-ok rounded-2xl p-4 text-center">
+                <p className="text-sm font-bold text-verde-ok">
+                  🎉 {match.otro_nombre} marcó el cambio como concretado. ¿Lo confirmás?
+                </p>
+                <p className="text-xs text-tinta2 mt-1">
+                  Al confirmar, las dos motos se dan de baja automáticamente.
+                </p>
+                <button
+                  onClick={marcarConcretado}
+                  disabled={marcando}
+                  className="mt-2.5 bg-verde-ok text-white font-titulos font-extrabold rounded-xl px-6 py-2.5 disabled:opacity-60"
+                >
+                  {marcando ? "Confirmando…" : "Sí, concretamos 🤝"}
+                </button>
+              </div>
+            ) : confirmando ? (
+              <div className="mt-2 bg-white border-2 border-linea rounded-2xl p-3.5 text-center">
+                <p className="text-sm font-semibold text-tinta2">
+                  ¿Seguro? Le vamos a pedir a {match.otro_nombre} que confirme, y al
+                  hacerlo las dos motos se dan de baja.
+                </p>
+                <div className="flex gap-2 justify-center mt-2.5">
+                  <button onClick={marcarConcretado} disabled={marcando}
+                    className="bg-verde-ok text-white font-bold text-sm rounded-xl px-5 py-2 disabled:opacity-60">
+                    {marcando ? "Marcando…" : "Sí, concretamos"}
+                  </button>
+                  <button onClick={() => setConfirmando(false)}
+                    className="border-2 border-linea font-semibold text-sm rounded-xl px-5 py-2 text-tinta2">
+                    Todavía no
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmando(true)}
+                className="mt-2 mx-auto text-xs font-bold text-verde-ok border-2 border-[#CDE4D4] bg-[#F0F7F2] rounded-full px-4 py-1.5 hover:border-verde-ok"
+              >
+                🤝 ¿Concretaron el cambio? Marcalo acá
+              </button>
+            )}
 
             <p className="text-[11px] text-gris text-center mt-2 px-4">
               Consejo: coordinen ver las motos en persona, en un lugar seguro, y verifiquen

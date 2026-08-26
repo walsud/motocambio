@@ -56,6 +56,7 @@ interface MatchInfo {
   otra_accesorios: string[];
   otro_nombre: string;
   no_leidos: number;
+  concretado_por: string | null;
 }
 
 // Comprime una foto en el navegador antes de subirla (máx 1280px, JPEG)
@@ -448,11 +449,23 @@ export default function Garage() {
                     <div className="h-36 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
                   )}
                   <div className="p-4">
-                    <span className={`text-[11px] font-bold rounded-full px-2.5 py-0.5 ${
-                      mt.tipo === "directo" ? "bg-[#E9F7EF] text-verde-ok" : "bg-[#FDF1E3] text-ambar"
-                    }`}>
-                      {mt.tipo === "directo" ? "🎯 Match directo" : "👀 Interés parcial"}
-                    </span>
+    	            <div className="flex gap-1.5 flex-wrap">
+                      <span className={`text-[11px] font-bold rounded-full px-2.5 py-0.5 ${
+                        mt.tipo === "directo" ? "bg-[#E9F7EF] text-verde-ok" : "bg-[#FDF1E3] text-ambar"
+                      }`}>
+                        {mt.tipo === "directo" ? "🎯 Match directo" : "👀 Interés parcial"}
+                      </span>
+                      {mt.estado === "concretado" && (
+                        <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-verde-ok text-white">
+                          🤝 Concretado
+                        </span>
+                      )}
+                      {mt.estado === "aceptado_por_uno" && (
+                        <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-[#FDF1E3] text-ambar">
+                          🤝 Falta confirmar
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-titulos font-extrabold text-[15px] mt-2">
                       {mt.otra_marca} {mt.otra_modelo} · {mt.otra_anio}
                     </h3>
