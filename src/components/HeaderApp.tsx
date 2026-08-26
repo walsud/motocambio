@@ -8,10 +8,12 @@ export function HeaderApp({
   nombre,
   activo = "garage",
   logueado = true,
+  esConcesionario = false,
 }: {
   nombre?: string;
-  activo?: "garage" | "explorar" | "oportunidades";
+  activo?: "garage" | "explorar" | "oportunidades" | "panel";
   logueado?: boolean;
+  esConcesionario?: boolean;
 }) {
   const router = useRouter();
 
@@ -46,6 +48,11 @@ export function HeaderApp({
           <Link href="/garage" className={tab(activo === "garage")}>
             Mi garage
           </Link>
+          {esConcesionario && (
+            <Link href="/panel" className={tab(activo === "panel")}>
+              🏪<span className="hidden sm:inline"> Panel</span>
+            </Link>
+          )}
         </nav>
         <div className="ml-auto flex items-center gap-3">
           {logueado ? (

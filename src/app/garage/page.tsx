@@ -97,6 +97,7 @@ export default function Garage() {
   const supabase = crearClienteNavegador();
   const [userId, setUserId] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
+  const [tipoPerfil, setTipoPerfil] = useState("particular");
   const [catalogo, setCatalogo] = useState<ModeloCatalogo[]>([]);
   const [errorCatalogo, setErrorCatalogo] = useState("");
   const [motos, setMotos] = useState<Moto[]>([]);
@@ -179,7 +180,7 @@ export default function Garage() {
     setUserId(user.id);
 
     const [perfilR, motosR, busR, matchesR, opsR] = await Promise.all([
-      supabase.from("perfiles").select("nombre").eq("id", user.id).single(),
+      supabase.from("perfiles").select("nombre, tipo").eq("id", user.id).single(),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
       supabase.rpc("mis_matches"),
@@ -191,7 +192,10 @@ export default function Garage() {
       ((opsR.data as Oportunidad[]) || []).filter((o) => misMotoIds.includes(o.moto_id))
     );
 
-    if (perfilR.data) setNombre(perfilR.data.nombre);
+    if (perfilR.data) {
+      setNombre(perfilR.data.nombre);
+      setTipoPerfil(perfilR.data.tipo || "particular");
+    }
     if (motosR.error) console.error("[Motocambio] Error cargando motos:", motosR.error);
     setMotos((motosR.data as Moto[]) || []);
     if (matchesR.error) console.error("[Motocambio] Error cargando matches:", matchesR.error);
@@ -478,7 +482,7 @@ export default function Garage() {
 
   return (
     <div className="min-h-screen bg-hueso">
-      <HeaderApp nombre={nombre} />
+      <HeaderApp nombre={nombre} esConcesionario={tipoPerfil === "concesionario"} />
       <main className="max-w-5xl mx-auto px-4 py-8 pb-24">
         <h1 className="font-titulos font-black text-3xl tracking-tight">Mi garage</h1>
         <p className="text-gris mt-1 mb-7">
@@ -1017,6 +1021,15 @@ export default function Garage() {
             </div>
           </section>
         </div>
+
+        {tipoPerfil !== "concesionario" && (
+          <p className="text-xs text-gris text-center mt-10">
+            ¿Tenés un local de motos?{" "}
+            <Link href="/panel" className="text-rojo font-bold">
+              Conocé el panel de concesionarios →
+            </Link>
+          </p>
+        )}
       </main>
     </div>
   );
