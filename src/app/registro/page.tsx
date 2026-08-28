@@ -120,14 +120,14 @@ export default function Registro() {
               className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
             />
           </label>
-          <label className="flex items-start gap-2.5 text-[13px] text-tinta2">
+          <label className="flex items-start gap-3 bg-hueso border-2 border-linea rounded-xl p-3.5 cursor-pointer has-[:checked]:border-verde-ok has-[:checked]:bg-[#F0F7F2]">
             <input
               type="checkbox"
               checked={aceptaTyc}
               onChange={(e) => setAceptaTyc(e.target.checked)}
-              className="mt-0.5 accent-[#C8102E]"
+              className="mt-0.5 w-5 h-5 shrink-0 accent-[#C8102E] cursor-pointer"
             />
-            <span>
+            <span className="text-[13px] text-tinta2 leading-relaxed">
               Leí y acepto los{" "}
               <Link href="/terminos" target="_blank" className="text-rojo font-semibold underline">
                 Términos y Condiciones

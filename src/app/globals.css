@@ -31,7 +31,9 @@ body {
   background: var(--hueso);
   color: var(--asfalto);
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  overflow-x: hidden;
+  /* "clip" recorta el desborde horizontal SIN romper los elementos fijos
+     en iPhone (con "hidden", la barra inferior flotaba al hacer scroll) */
+  overflow-x: clip;
 }
 
 /* Ningún campo puede empujar el ancho de la página
