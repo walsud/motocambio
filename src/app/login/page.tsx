@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { Logo, Wordmark } from "@/components/Logo";
+import { CampoPassword } from "@/components/CampoPassword";
 
 function FormularioLogin() {
   const router = useRouter();
@@ -63,13 +64,7 @@ function FormularioLogin() {
         </label>
         <label className="text-sm font-semibold">
           Contraseña
-          <input
-            required
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
-          />
+          <CampoPassword value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         <p className="text-right -mt-2">
           <Link href="/recuperar" className="text-[13px] text-gris hover:text-rojo font-semibold">

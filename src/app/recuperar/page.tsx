@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { Logo, Wordmark } from "@/components/Logo";
+import { CampoPassword } from "@/components/CampoPassword";
 
 // Una página, dos caras:
 //  · "pedir": escribís tu mail y te mandamos el enlace de recuperación.
@@ -142,24 +143,11 @@ export default function Recuperar() {
             <form onSubmit={cambiarPassword} className="flex flex-col gap-4">
               <label className="text-sm font-semibold">
                 Contraseña nueva
-                <input
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
-                />
+                <CampoPassword value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
               </label>
               <label className="text-sm font-semibold">
                 Repetila
-                <input
-                  required
-                  type="password"
-                  value={password2}
-                  onChange={(e) => setPassword2(e.target.value)}
-                  className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
-                />
+                <CampoPassword value={password2} onChange={(e) => setPassword2(e.target.value)} />
               </label>
               {error && (
                 <p className="text-sm text-rojo bg-[#FBF0F1] border border-[#EED2D6] rounded-lg px-3 py-2">
