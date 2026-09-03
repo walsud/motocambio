@@ -2,6 +2,13 @@
 import { useMemo, useState } from "react";
 import type { ModeloCatalogo } from "@/components/Autocompletar";
 
+// Orden "natural": alfabético pero entendiendo los números, así
+// Z400 < Z650 < Z900 < Z1000 (y no Z1000 primero por empezar con "1").
+const ordenNatural = new Intl.Collator("es", {
+  numeric: true,
+  sensitivity: "base",
+});
+
 // Selector en dos pasos: primero la Marca, después el Modelo (filtrado).
 // El clásico que todos conocen — imposible perderse.
 export function SelectorModelo({
@@ -15,14 +22,17 @@ export function SelectorModelo({
 }) {
   const [marca, setMarca] = useState("");
   const marcas = useMemo(
-    () => Array.from(new Set(catalogo.map((m) => m.marca))).sort(),
+    () =>
+      Array.from(new Set(catalogo.map((m) => m.marca))).sort(
+        ordenNatural.compare
+      ),
     [catalogo]
   );
   const modelos = useMemo(
     () =>
       catalogo
         .filter((m) => m.marca === marca)
-        .sort((a, b) => a.modelo.localeCompare(b.modelo)),
+        .sort((a, b) => ordenNatural.compare(a.modelo, b.modelo)),
     [catalogo, marca]
   );
 
