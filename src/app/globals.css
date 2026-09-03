@@ -31,8 +31,14 @@ body {
   background: var(--hueso);
   color: var(--asfalto);
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  /* "clip" recorta el desborde horizontal SIN romper los elementos fijos
-     en iPhone (con "hidden", la barra inferior flotaba al hacer scroll) */
+}
+
+/* Recorta el desborde horizontal SIN tocar el body: cuando el recorte
+   iba en el body, Safari de iPhone agregaba un scroll fantasma después
+   del pie de página (y con "hidden" la barra inferior flotaba).
+   En este envoltorio interno, iOS lo respeta sin efectos raros, y los
+   elementos fijos (la barra inferior) no se ven afectados. */
+.recorte-horizontal {
   overflow-x: clip;
 }
 

@@ -48,7 +48,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es-AR">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <div className="recorte-horizontal">{children}</div>
+      </body>
     </html>
   );
 }
