@@ -93,6 +93,22 @@ async function comprimirFoto(archivo: File): Promise<Blob> {
   );
 }
 
+// Avisito bajo el selector de modelo: si el tuyo no está, escribinos.
+function NotaFaltaModelo({ total }: { total: number }) {
+  return (
+    <p className="text-[13px] text-tinta2 bg-[#FDF7EC] border border-[#EFE3C8] rounded-lg px-3 py-2 mt-2 leading-relaxed">
+      💡 Hay {total} modelos en el catálogo. <b>¿No encontrás el tuyo?</b>{" "}
+      <a
+        href="mailto:contacto@motocambio.com.ar?subject=Falta un modelo en el catálogo&body=Hola, no encuentro este modelo: (marca, modelo y cilindrada)"
+        className="text-rojo font-semibold underline"
+      >
+        Escribinos
+      </a>{" "}
+      y lo agregamos en el día.
+    </p>
+  );
+}
+
 export default function Garage() {
   const supabase = crearClienteNavegador();
   const [userId, setUserId] = useState<string | null>(null);
@@ -746,11 +762,7 @@ export default function Garage() {
                 ) : (
                   <div className="mt-1">
                     <SelectorModelo catalogo={catalogo} onElegir={setModeloSel} />
-                    {catalogo.length > 0 && (
-                      <p className="text-xs text-gris mt-1.5">
-                        {catalogo.length} modelos en el catálogo. ¿Falta el tuyo? Escribinos a contacto@motocambio.com.ar
-                      </p>
-                    )}
+                    {catalogo.length > 0 && <NotaFaltaModelo total={catalogo.length} />}
                   </div>
                 )}
                 {modeloSel && modeloSel.cilindrada < 280 && (
@@ -957,6 +969,7 @@ export default function Garage() {
                 <div className="mt-1">
                   <SelectorModelo catalogo={catalogo} reiniciarAlElegir
                     onElegir={(m) => { if (!buscados.find((x) => x.id === m.id)) setBuscados([...buscados, m]); }} />
+                  {catalogo.length > 0 && <NotaFaltaModelo total={catalogo.length} />}
                 </div>
               </div>
               <div>
