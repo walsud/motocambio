@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 // Tipografías autoalojadas (sin depender de Google Fonts)
 import "@fontsource/archivo/600.css";
 import "@fontsource/archivo/800.css";
@@ -50,6 +51,7 @@ export default function RootLayout({
     <html lang="es-AR">
       <body className="antialiased">
         <div className="recorte-horizontal">{children}</div>
+        <Analytics />
       </body>
     </html>
   );
