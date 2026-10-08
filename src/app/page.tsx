@@ -5,6 +5,7 @@ import { crearClienteNavegador } from "@/lib/supabase/client";
 import { Logo, Wordmark } from "@/components/Logo";
 import { HeaderApp } from "@/components/HeaderApp";
 import { RescateCodigo } from "@/components/RescateCodigo";
+import { SeBuscan } from "@/components/SeBuscan";
 
 interface MotoPublica {
   id: string;
@@ -261,6 +262,9 @@ export default function Inicio() {
             </div>
           </section>
         )}
+
+        {/* ---------- SE BUSCAN ---------- */}
+        <SeBuscan logueado={logueado} />
 
         {/* ---------- OPORTUNIDADES ---------- */}
         <section className="pb-12">

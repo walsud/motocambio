@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
+import { SeBuscan } from "@/components/SeBuscan";
 
 const PROVINCIAS = [
   "CABA", "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán",
@@ -94,6 +95,8 @@ export default function Explorar() {
         <p className="text-gris mt-1 mb-6">
           Todas +300cc, todas para cambiar. ¿Viste una que te gusta? Sumala a tu búsqueda y que el matching trabaje.
         </p>
+
+        <SeBuscan logueado={logueado} compacto />
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-2.5 mb-6">
