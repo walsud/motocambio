@@ -6,6 +6,7 @@ import { Logo, Wordmark } from "@/components/Logo";
 import { HeaderApp } from "@/components/HeaderApp";
 import { RescateCodigo } from "@/components/RescateCodigo";
 import { SeBuscan } from "@/components/SeBuscan";
+import { BannerPublicitario } from "@/components/BannerPublicitario";
 
 interface MotoPublica {
   id: string;
@@ -349,23 +350,9 @@ export default function Inicio() {
           </div>
         </section>
 
-        {/* ---------- BANNER TU MARCA ---------- */}
+        {/* ---------- BANNER TU MARCA / PUBLICIDAD ---------- */}
         <section className="pb-12">
-          <div className="relative bg-white border-2 border-dashed border-linea rounded-2xl p-6 flex items-center justify-between gap-4 flex-wrap">
-            <span className="absolute -top-2.5 left-5 bg-hueso text-[10px] font-bold text-gris uppercase tracking-wider px-2">
-              Espacio publicitario
-            </span>
-            <div>
-              <p className="font-titulos font-extrabold">📣 Tu marca, acá</p>
-              <p className="text-sm text-tinta2 mt-0.5">
-                Audiencia 100% motoquera. Cascos, indumentaria, seguros, lubricantes.
-              </p>
-            </div>
-            <a href="mailto:contacto@motocambio.com.ar?subject=Quiero anunciar en Motocambio"
-              className="border-2 border-linea hover:border-rojo font-titulos font-extrabold rounded-xl px-6 py-3 text-tinta2">
-              Anunciar en Motocambio
-            </a>
-          </div>
+          <BannerPublicitario />
         </section>
       </main>
 

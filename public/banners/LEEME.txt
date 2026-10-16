@@ -1,0 +1,3 @@
+Las imágenes del anunciante van acá:
+  banner-desktop.jpg (1600x400)
+  banner-mobile.jpg (1080x540)
