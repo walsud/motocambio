@@ -3,10 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
-// "Me interesa" en una oportunidad: le avisamos por mail al vendedor
-// con el contacto del interesado, para que se escriban directo.
+// "Me interesa" en una oportunidad: crea una CONSULTA y le avisa por mail
+// al vendedor, SIN el mail del interesado. Si el vendedor la acepta desde
+// su garage, se abre un chat dentro de Motocambio. Nadie ve el mail ni el
+// teléfono del otro.
 
 export const dynamic = "force-dynamic";
+
+const BASE = "https://motocambio.com.ar";
 
 export async function POST(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,7 +23,7 @@ export async function POST(req: NextRequest) {
   // 1) Quién es el interesado (por su sesión)
   const supabase = await crearClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email) {
+  if (!user) {
     return NextResponse.json({ ok: false, motivo: "sin sesión" }, { status: 401 });
   }
   const { data: perfil } = await supabase
@@ -43,12 +47,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, motivo: "es tu propia moto" }, { status: 400 });
   }
 
-  // 3) Mail al vendedor con el contacto del interesado
+  // 3) ¿Ya había consultado por esta oportunidad? No duplicamos ni re-avisamos.
+  const ref = String(oportunidad_id);
+  const { data: previa } = await admin
+    .from("consultas")
+    .select("id, estado")
+    .eq("oportunidad_ref", ref)
+    .eq("interesado", user.id)
+    .maybeSingle();
+  if (previa) {
+    return NextResponse.json({ ok: true, ya: true, estado: previa.estado, consulta_id: previa.id });
+  }
+
+  // 4) Crear la consulta (con una foto de los datos, por si la oportunidad vence)
+  const { data: nueva, error: errIns } = await admin
+    .from("consultas")
+    .insert({
+      oportunidad_ref: ref,
+      interesado: user.id,
+      vendedor: op.vendedor_id,
+      interesado_nombre: nombreInteresado,
+      vendedor_nombre: op.vendedor_nombre || "El vendedor",
+      moto_txt: op.moto_txt,
+      precio: op.precio ?? null,
+    })
+    .select("id")
+    .single();
+  if (errIns || !nueva) {
+    console.error("[Motocambio] Error creando consulta:", errIns);
+    return NextResponse.json({ ok: false, motivo: "no se pudo crear la consulta" });
+  }
+
+  // 5) Aviso al vendedor: sin datos de contacto del interesado
   const resend = new Resend(claveResend);
   const { error: errMail } = await resend.emails.send({
     from: "Motocambio <contacto@motocambio.com.ar>",
     to: op.vendedor_email,
-    replyTo: user.email,
     subject: `💰 Hay un interesado en tu ${op.moto_txt}`,
     html: `<!doctype html>
 <html lang="es"><body style="margin:0;background:#f7f5f2;font-family:Arial,Helvetica,sans-serif;color:#14141f">
@@ -61,14 +95,15 @@ export async function POST(req: NextRequest) {
         <h1 style="margin:0 0 6px;font-size:22px">💰 ¡Hay un interesado!</h1>
         <p style="margin:0 0 16px;color:#44445a;font-size:15px;line-height:1.55">Hola ${op.vendedor_nombre},</p>
         <p style="margin:0 0 18px;color:#44445a;font-size:15px;line-height:1.55">
-          <b>${nombreInteresado}</b> vio tu <b>${op.moto_txt}</b> en el sector Oportunidades
+          <b>${nombreInteresado}</b> vio tu <b>${op.moto_txt}</b> en Oportunidades
           (USD ${Number(op.precio).toLocaleString("es-AR")} de contado) y quiere hablar con vos.
         </p>
         <p style="margin:0 0 22px;color:#44445a;font-size:15px;line-height:1.55">
-          Escribile a <a href="mailto:${user.email}" style="color:#C8102E;font-weight:700">${user.email}</a>
-          — o simplemente respondé este mail y le llega directo.
+          Entrá a tu garage y elegí si aceptás la consulta. Si la aceptás, se abre un chat
+          dentro de Motocambio. Ninguno de los dos ve el mail ni el teléfono del otro.
         </p>
-        <p style="margin:0;color:#6b6b7b;font-size:12px;line-height:1.5">
+        <a href="${BASE}/garage" style="display:inline-block;background:#C8102E;color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:12px 22px">Ver la consulta</a>
+        <p style="margin:22px 0 0;color:#6b6b7b;font-size:12px;line-height:1.5">
           Consejo: coordiná ver la moto en persona y verificá los papeles antes de
           cualquier seña. La operación corre por cuenta de ambas partes.
         </p>
@@ -78,8 +113,8 @@ export async function POST(req: NextRequest) {
 </body></html>`,
   });
   if (errMail) {
+    // La consulta ya quedó creada: el vendedor la ve igual en su garage.
     console.error("[Motocambio] Resend interés:", errMail);
-    return NextResponse.json({ ok: false, motivo: "no se pudo mandar el aviso" });
   }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, consulta_id: nueva.id });
 }

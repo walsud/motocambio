@@ -5,6 +5,7 @@ import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
 import { type ModeloCatalogo } from "@/components/Autocompletar";
 import { SelectorModelo } from "@/components/SelectorModelo";
+import { ConsultasOportunidades } from "@/components/ConsultasOportunidades";
 
 const PROVINCIAS = [
   "CABA", "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán",
@@ -527,6 +528,9 @@ export default function Garage() {
             </button>
           </div>
         )}
+
+        {/* ---------- CONSULTAS DE OPORTUNIDADES ---------- */}
+        <ConsultasOportunidades />
 
         {/* ---------- TUS MATCHES ---------- */}
         <section className="mb-10">

@@ -86,7 +86,11 @@ export default function Oportunidades() {
       const j = await r.json();
       if (j.ok) {
         setAvisadas([...avisadas, o.id]);
-        setAviso(`✓ Le avisamos a ${o.dueno_nombre}. Te va a escribir a tu mail.`);
+        setAviso(
+          j.ya
+            ? "Ya habías consultado por esta moto. Seguila desde Mi garage."
+            : `✓ Le avisamos a ${o.dueno_nombre}. Si acepta, se abre un chat en Mi garage.`
+        );
       } else {
         setAviso(
           j.motivo === "es tu propia moto"
@@ -192,7 +196,7 @@ export default function Oportunidades() {
                           } disabled:opacity-70`}
                         >
                           {avisadas.includes(o.id)
-                            ? "✓ Aviso enviado"
+                            ? "✓ Consulta enviada"
                             : avisando === o.id
                             ? "Avisando…"
                             : "💬 Me interesa"}
@@ -204,6 +208,11 @@ export default function Oportunidades() {
                         >
                           Registrate para contactar →
                         </Link>
+                      )}
+                      {logueado && (
+                        <p className="text-[10px] text-gris text-center mt-1.5">
+                          Si el vendedor acepta, chatean en Motocambio. No compartimos tu mail ni tu teléfono.
+                        </p>
                       )}
                     </div>
                   </div>
