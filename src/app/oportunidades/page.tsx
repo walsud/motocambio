@@ -169,13 +169,18 @@ export default function Oportunidades() {
                       {o.km.toLocaleString("es-AR")} km · {o.provincia}
                       {o.categoria ? ` · ${o.categoria} ${o.cilindrada}cc` : ""}
                     </p>
-                    <p className="font-titulos font-black text-2xl text-rojo mt-2">
+                    {o.ref_min && (
+                      <p className="text-[13px] text-gris line-through mt-2">
+                        USD {Number(o.ref_min).toLocaleString("es-AR")}
+                      </p>
+                    )}
+                    <p className="font-titulos font-black text-2xl text-rojo">
                       USD {Number(o.precio_contado).toLocaleString("es-AR")}
                       <span className="text-xs font-bold text-gris"> de contado</span>
                     </p>
                     {o.ref_min && (
                       <p className="text-[11px] text-gris mt-0.5">
-                        Referencia: USD {Number(o.ref_min).toLocaleString("es-AR")} – {Number(o.ref_max).toLocaleString("es-AR")}
+                        Referencia de mercado: USD {Number(o.ref_min).toLocaleString("es-AR")} – {Number(o.ref_max).toLocaleString("es-AR")}
                       </p>
                     )}
                     {o.motivo && (

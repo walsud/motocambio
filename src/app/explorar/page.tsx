@@ -41,6 +41,8 @@ export default function Explorar() {
   const [marca, setMarca] = useState("");
   const [provincia, setProvincia] = useState("");
   const [orden, setOrden] = useState<"recientes" | "precio_asc" | "precio_desc">("recientes");
+  const [categoria, setCategoria] = useState("");
+  const [categorias, setCategorias] = useState<string[]>([]);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -48,6 +50,7 @@ export default function Explorar() {
     let consulta = supabase.from("motos_publicas").select("*");
     if (marca) consulta = consulta.eq("marca", marca);
     if (provincia) consulta = consulta.eq("provincia", provincia);
+    if (categoria) consulta = consulta.eq("categoria", categoria);
     if (orden === "recientes") {
       consulta = consulta.order("creado_el", { ascending: false });
     } else {
@@ -63,7 +66,7 @@ export default function Explorar() {
     }
     setMotos((data as MotoPublica[]) || []);
     setCargando(false);
-  }, [supabase, marca, provincia, orden]);
+  }, [supabase, marca, provincia, orden, categoria]);
 
   useEffect(() => {
     cargar();
@@ -77,6 +80,14 @@ export default function Explorar() {
         if (data) setNombre(data.nombre);
       }
     });
+    const desdeUrl = new URLSearchParams(window.location.search).get("categoria");
+    if (desdeUrl) setCategoria(desdeUrl);
+    supabase
+      .from("motos_publicas")
+      .select("categoria")
+      .then(({ data }) => {
+        if (data) setCategorias([...new Set(data.map((m: { categoria: string | null }) => m.categoria).filter(Boolean) as string[])].sort());
+      });
     supabase
       .from("catalogo_modelos")
       .select("marca")
@@ -105,6 +116,11 @@ export default function Explorar() {
             <option value="">Todas las marcas</option>
             {marcas.map((m) => <option key={m}>{m}</option>)}
           </select>
+          <select value={categoria} onChange={(e) => setCategoria(e.target.value)}
+            className="border-2 border-linea rounded-xl px-3 py-2 text-sm font-semibold bg-white outline-none focus:border-rojo">
+            <option value="">Todos los estilos</option>
+            {categorias.map((c) => <option key={c}>{c}</option>)}
+          </select>
           <select value={provincia} onChange={(e) => setProvincia(e.target.value)}
             className="border-2 border-linea rounded-xl px-3 py-2 text-sm font-semibold bg-white outline-none focus:border-rojo">
             <option value="">Todo el país</option>
@@ -116,8 +132,8 @@ export default function Explorar() {
             <option value="precio_asc">Menor precio</option>
             <option value="precio_desc">Mayor precio</option>
           </select>
-          {(marca || provincia) && (
-            <button onClick={() => { setMarca(""); setProvincia(""); }}
+          {(marca || provincia || categoria) && (
+            <button onClick={() => { setMarca(""); setProvincia(""); setCategoria(""); }}
               className="text-sm font-semibold text-rojo px-2">
               ✕ Limpiar
             </button>

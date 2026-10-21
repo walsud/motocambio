@@ -7,6 +7,7 @@ import { HeaderApp } from "@/components/HeaderApp";
 import { RescateCodigo } from "@/components/RescateCodigo";
 import { SeBuscan } from "@/components/SeBuscan";
 import { BannerPublicitario } from "@/components/BannerPublicitario";
+import { ExplorarPorEstilo } from "@/components/ExplorarPorEstilo";
 
 interface MotoPublica {
   id: string;
@@ -121,8 +122,12 @@ export default function Inicio() {
       <HeaderApp logueado={logueado} activo="inicio" />
 
       {/* ---------- HÉROE ---------- */}
-      <section className="bg-gradient-to-br from-asfalto via-[#23233B] to-[#3A1F2B] text-white">
-        <div className="max-w-5xl mx-auto px-4 py-16 sm:py-20 text-center flex flex-col items-center gap-5">
+      <section className="relative text-white overflow-hidden bg-asfalto">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/hero-salar.jpg" alt="" aria-hidden
+          className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-b from-asfalto/80 via-asfalto/55 to-asfalto/85" />
+        <div className="relative max-w-5xl mx-auto px-4 py-20 sm:py-28 text-center flex flex-col items-center gap-5">
           <p className="text-xs uppercase tracking-widest font-bold text-[#8A8A9E]">
             Permutas de motos +300 cc · Argentina
           </p>
@@ -240,20 +245,22 @@ export default function Inicio() {
                   className="bg-white border border-linea rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gris transition-all">
                   {m.fotos?.length ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.fotos[0]} alt={`${m.marca} ${m.modelo}`} className="h-36 w-full object-cover" />
+                    <img src={m.fotos[0]} alt={`${m.marca} ${m.modelo}`} className="h-48 w-full object-cover" />
                   ) : (
-                    <div className="h-36 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
+                    <div className="h-48 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
                   )}
                   <div className="p-4">
-                    <h3 className="font-titulos font-extrabold text-[14px]">
-                      {m.marca} {m.modelo} · {m.anio}
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-gris">
+                      {m.marca}{m.dueno_tipo === "concesionario" ? " · 🏪 Concesionario" : ""}
+                    </p>
+                    <h3 className="font-titulos font-extrabold text-[16px] leading-tight mt-0.5">
+                      {m.modelo} · {m.anio}
                     </h3>
                     <p className="text-xs text-gris mt-0.5">
                       {m.km.toLocaleString("es-AR")} km · {m.provincia}
-                      {m.dueno_tipo === "concesionario" ? " · 🏪" : ""}
                     </p>
                     {m.precio_usd && (
-                      <p className="font-titulos font-extrabold text-rojo mt-1">
+                      <p className="font-titulos font-black text-2xl text-rojo mt-1.5">
                         USD {Number(m.precio_usd).toLocaleString("es-AR")}
                       </p>
                     )}
@@ -263,6 +270,9 @@ export default function Inicio() {
             </div>
           </section>
         )}
+
+        {/* ---------- EXPLORÁ POR ESTILO ---------- */}
+        <ExplorarPorEstilo />
 
         {/* ---------- SE BUSCAN ---------- */}
         <SeBuscan logueado={logueado} />
@@ -293,7 +303,12 @@ export default function Inicio() {
                     <p className="font-titulos font-extrabold text-[14px]">
                       {o.marca} {o.modelo} · {o.anio}
                     </p>
-                    <p className="font-titulos font-black text-xl text-[#FF7A8E] mt-1">
+                    {o.ref_min && Number(o.ref_min) > Number(o.precio_contado) && (
+                      <p className="text-[12px] text-white/45 line-through mt-1">
+                        USD {Number(o.ref_min).toLocaleString("es-AR")}
+                      </p>
+                    )}
+                    <p className="font-titulos font-black text-xl text-[#FF7A8E]">
                       USD {Number(o.precio_contado).toLocaleString("es-AR")}
                     </p>
                     {o.ref_min && Number(o.ref_min) > Number(o.precio_contado) && (
