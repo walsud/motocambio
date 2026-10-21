@@ -143,6 +143,7 @@ export default function Garage() {
   const [otroAccesorio, setOtroAccesorio] = useState("");
   const [archivos, setArchivos] = useState<File[]>([]);
   const [guardandoMoto, setGuardandoMoto] = useState(false);
+  const [confirmarSinFotos, setConfirmarSinFotos] = useState(false);
   // --- edición de una moto ya cargada ---
   const [motoEditando, setMotoEditando] = useState<Moto | null>(null);
   const [fotosExistentes, setFotosExistentes] = useState<string[]>([]);
@@ -255,6 +256,7 @@ export default function Garage() {
     setVisibilidad("publicada"); setArchivos([]);
     setAccesoriosSel([]); setOtroAccesorio("");
     setMotoEditando(null); setFotosExistentes([]);
+    setConfirmarSinFotos(false);
   }
 
   // ---------- EDICIÓN ----------
@@ -287,6 +289,15 @@ export default function Garage() {
       avisar("Elegí el modelo del catálogo (escribí y seleccioná de la lista).");
       return;
     }
+    // Sin fotos: primera vez avisamos; el segundo toque publica igual.
+    const sinFotos = motoEditando
+      ? fotosExistentes.length === 0 && archivos.length === 0
+      : archivos.length === 0;
+    if (sinFotos && !confirmarSinFotos) {
+      setConfirmarSinFotos(true);
+      return;
+    }
+    setConfirmarSinFotos(false);
     setGuardandoMoto(true);
 
     // ----- Modo edición: actualizo la publicación existente -----
@@ -633,6 +644,12 @@ export default function Garage() {
                       {m.km.toLocaleString("es-AR")} km · {m.provincia}
                       {m.precio_usd ? ` · USD ${m.precio_usd.toLocaleString("es-AR")}` : ""}
                     </p>
+                    {!m.fotos?.length && (
+                      <p className="text-[11px] text-tinta2 mt-1.5 bg-[#FDF1E3] border border-[#EFD9BB] rounded-lg px-2 py-1.5">
+                        📷 <b>Sin fotos.</b> Agregale con ✏️ Editar: las
+                        publicaciones con fotos matchean mucho más.
+                      </p>
+                    )}
                     {m.accesorios?.length > 0 && (
                       <p className="text-[11px] text-tinta2 mt-1.5 bg-hueso rounded-lg px-2 py-1">
                         🧰 {m.accesorios.slice(0, 3).join(" · ")}
@@ -930,12 +947,20 @@ export default function Garage() {
                   ? `Agregar fotos nuevas (quedan ${Math.max(0, 6 - fotosExistentes.length)} lugares)`
                   : "Fotos (hasta 6 — se comprimen solas)"}
                 <input type="file" accept="image/*" multiple
-                  onChange={(e) => setArchivos(Array.from(e.target.files || []))}
+                  onChange={(e) => { setArchivos(Array.from(e.target.files || [])); setConfirmarSinFotos(false); }}
                   className="mt-1 w-full text-sm font-normal file:mr-3 file:rounded-lg file:border-0 file:bg-asfalto file:text-white file:px-4 file:py-2 file:font-semibold" />
                 {archivos.length > 0 && (
                   <span className="text-xs text-verde-ok font-normal">{archivos.length} foto(s) lista(s) para subir</span>
                 )}
               </label>
+              {confirmarSinFotos && (
+                <div className="text-sm bg-[#FDF1E3] border border-[#EFD9BB] rounded-xl px-4 py-3 text-tinta2">
+                  📷 <b>Vas a publicar sin fotos.</b> Las motos con fotos
+                  consiguen muchos más matches: una con el celular alcanza.
+                  Elegí fotos acá arriba, o tocá el botón de nuevo para
+                  publicar igual (podés agregarlas después con ✏️ Editar).
+                </div>
+              )}
               <div className="flex gap-3">
                 {motoEditando && (
                   <button type="button" onClick={limpiarFormulario}
