@@ -68,7 +68,16 @@ export default function Terminos() {
             </p>
           </section>
           <section>
-            <h2 className="font-titulos font-extrabold text-asfalto mb-1">5. Conducta y moderación</h2>
+            <h2 className="font-titulos font-extrabold text-asfalto mb-1">5. Cookies</h2>
+            <p>
+              Usamos únicamente las cookies necesarias para mantener tu sesión
+              iniciada: sin ellas no podrías entrar a tu cuenta. Las visitas al
+              sitio se miden de forma anónima y sin cookies. No usamos cookies
+              de publicidad ni compartimos datos de navegación con terceros.
+            </p>
+          </section>
+          <section>
+            <h2 className="font-titulos font-extrabold text-asfalto mb-1">6. Conducta y moderación</h2>
             <p>
               Podemos suspender cuentas o publicaciones que incumplan estas
               reglas, ante denuncias de otros usuarios o indicios de fraude.
