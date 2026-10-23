@@ -148,7 +148,7 @@ export default function Oportunidades() {
                   <div className="relative">
                     {o.fotos?.length ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={o.fotos[0]} alt={`${o.marca} ${o.modelo}`} className="h-40 w-full object-cover" />
+                      <img src={o.fotos[0]} alt={`${o.marca} ${o.modelo}`} loading="lazy" decoding="async" className="h-40 w-full object-cover" />
                     ) : (
                       <div className="h-40 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
                     )}

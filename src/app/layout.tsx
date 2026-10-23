@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 // Tipografías autoalojadas (sin depender de Google Fonts)
-import "@fontsource/archivo/600.css";
 import "@fontsource/archivo/800.css";
 import "@fontsource/archivo/900.css";
 import "@fontsource/inter/400.css";

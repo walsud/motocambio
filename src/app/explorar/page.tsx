@@ -166,7 +166,7 @@ export default function Explorar() {
                   className="bg-white border border-linea rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gris transition-all">
                   {m.fotos?.length ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.fotos[0]} alt={`${m.marca} ${m.modelo}`} className="h-40 w-full object-cover" />
+                    <img src={m.fotos[0]} alt={`${m.marca} ${m.modelo}`} loading="lazy" decoding="async" className="h-40 w-full object-cover" />
                   ) : (
                     <div className="h-40 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
                   )}
