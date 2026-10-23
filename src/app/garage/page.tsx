@@ -5,6 +5,7 @@ import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
 import { type ModeloCatalogo } from "@/components/Autocompletar";
 import { SelectorModelo } from "@/components/SelectorModelo";
+import { SeBuscan } from "@/components/SeBuscan";
 import { ConsultasOportunidades } from "@/components/ConsultasOportunidades";
 
 const PROVINCIAS = [
@@ -114,6 +115,9 @@ export default function Garage() {
   const supabase = crearClienteNavegador();
   const [userId, setUserId] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
+  const [telefonoPerfil, setTelefonoPerfil] = useState("");
+  const [guardandoTel, setGuardandoTel] = useState(false);
+  const [telGuardado, setTelGuardado] = useState(false);
   const [tipoPerfil, setTipoPerfil] = useState("particular");
   const [esAdmin, setEsAdmin] = useState(false);
   const [catalogo, setCatalogo] = useState<ModeloCatalogo[]>([]);
@@ -199,7 +203,7 @@ export default function Garage() {
     setUserId(user.id);
 
     const [perfilR, motosR, busR, matchesR, opsR] = await Promise.all([
-      supabase.from("perfiles").select("nombre, tipo, es_admin").eq("id", user.id).single(),
+      supabase.from("perfiles").select("nombre, tipo, es_admin, telefono").eq("id", user.id).single(),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
       supabase.rpc("mis_matches"),
@@ -213,6 +217,7 @@ export default function Garage() {
 
     if (perfilR.data) {
       setNombre(perfilR.data.nombre);
+      setTelefonoPerfil(perfilR.data.telefono || "");
       setTipoPerfil(perfilR.data.tipo || "particular");
       setEsAdmin(!!perfilR.data.es_admin);
     }
@@ -250,6 +255,20 @@ export default function Garage() {
     },
     [catalogo]
   );
+
+  async function guardarTelefono() {
+    if (!userId) return;
+    setGuardandoTel(true);
+    const { error } = await supabase
+      .from("perfiles")
+      .update({ telefono: telefonoPerfil.trim() || null })
+      .eq("id", userId);
+    setGuardandoTel(false);
+    if (!error) {
+      setTelGuardado(true);
+      setTimeout(() => setTelGuardado(false), 4000);
+    }
+  }
 
   function limpiarFormulario() {
     setModeloSel(null); setAnio(""); setKm(""); setPrecio(""); setDominio("");
@@ -622,10 +641,45 @@ export default function Garage() {
         <section className="mb-10">
           <h2 className="font-titulos font-extrabold text-xl mb-3">🏍️ Mis motos</h2>
           {motos.length === 0 ? (
-            <p className="text-sm text-gris bg-white border border-linea rounded-xl p-5">
-              Todavía no cargaste ninguna moto. Completá el formulario de abajo
-              y tu moto entra al motor de matching al instante.
-            </p>
+            <div className="bg-white border-2 border-linea rounded-2xl p-6">
+              <p className="font-titulos font-extrabold text-lg">
+                👋 ¡Bienvenido{nombre ? `, ${nombre}` : ""}! Tu garage está listo.
+              </p>
+              <p className="text-sm text-gris mt-1 mb-4">
+                Mirá lo que la gente está buscando ahora mismo — quizás tenés
+                una de estas guardada:
+              </p>
+              <SeBuscan logueado compacto />
+              <div className="flex flex-wrap gap-3">
+                <a href="#cargar-moto"
+                  className="bg-rojo hover:bg-rojo-oscuro text-white font-titulos font-extrabold rounded-xl px-6 py-3">
+                  🏍️ Publicar mi moto
+                </a>
+                <a href="#que-busco"
+                  className="border-2 border-linea hover:border-rojo bg-white font-titulos font-extrabold rounded-xl px-6 py-3 text-tinta2">
+                  🎯 Contar qué busco
+                </a>
+              </div>
+              <div className="mt-5 bg-hueso border border-linea rounded-xl p-4">
+                <p className="text-sm font-semibold">
+                  📱 ¿Querés que te ayudemos por WhatsApp? <span className="font-normal text-gris">(opcional)</span>
+                </p>
+                <p className="text-xs text-gris mt-0.5 mb-2.5">
+                  Solo para ayudarte con tu cuenta. <b>Nunca se publica ni se
+                  muestra a otros usuarios.</b>
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <input type="tel" value={telefonoPerfil}
+                    onChange={(e) => setTelefonoPerfil(e.target.value)}
+                    placeholder="Ej: 11 1234-5678"
+                    className="flex-1 min-w-[180px] border-2 border-linea rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rojo bg-white" />
+                  <button type="button" onClick={guardarTelefono} disabled={guardandoTel}
+                    className="bg-asfalto hover:opacity-90 text-white font-titulos font-extrabold rounded-xl px-5 py-2.5 text-sm disabled:opacity-60">
+                    {guardandoTel ? "Guardando…" : telGuardado ? "✓ Guardado" : "Guardar"}
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {motos.map((m) => (
@@ -760,7 +814,7 @@ export default function Garage() {
 
         <div className="grid gap-8 lg:grid-cols-2 items-start">
           {/* ---------- CARGAR MOTO ---------- */}
-          <section ref={formRef} className={`min-w-0 bg-white border rounded-2xl shadow-sm p-6 ${motoEditando ? "border-rojo border-2" : "border-linea"}`}>
+          <section id="cargar-moto" ref={formRef} className={`min-w-0 bg-white border rounded-2xl shadow-sm p-6 scroll-mt-24 ${motoEditando ? "border-rojo border-2" : "border-linea"}`}>
             <h2 className="font-titulos font-extrabold text-xl mb-1">
               {motoEditando ? "✏️ Editar publicación" : "➕ Cargar una moto"}
             </h2>
@@ -977,7 +1031,7 @@ export default function Garage() {
           </section>
 
           {/* ---------- QUÉ BUSCO ---------- */}
-          <section className="min-w-0 bg-white border border-linea rounded-2xl shadow-sm p-6">
+          <section id="que-busco" className="min-w-0 bg-white border border-linea rounded-2xl shadow-sm p-6 scroll-mt-24">
             <h2 className="font-titulos font-extrabold text-xl mb-1">🎯 Qué busco</h2>
             <p className="text-sm text-gris mb-5">
               Podés buscar cualquier cilindrada: publicás +300, pedís lo que quieras.

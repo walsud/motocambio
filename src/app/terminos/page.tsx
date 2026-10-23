@@ -62,7 +62,9 @@ export default function Terminos() {
               Recolectamos el mínimo necesario para operar la plataforma
               (Ley 25.326). Tu contacto personal nunca se muestra a otros
               usuarios: la comunicación inicial ocurre por el chat interno. El
-              dominio (patente) de tu moto es privado y no se publica. Podés
+              dominio (patente) de tu moto es privado y no se publica. Si nos
+              dejás un teléfono de contacto, es opcional y lo usamos únicamente
+              para ayudarte con tu cuenta: nunca se publica ni se comparte. Podés
               pedir la baja de tu cuenta y tus datos escribiendo a
               contacto@motocambio.com.ar.
             </p>
