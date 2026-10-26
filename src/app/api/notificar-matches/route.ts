@@ -20,6 +20,13 @@ interface MatchPendiente {
   diferencia: number | null;
 }
 
+interface CadenaPendiente {
+  cadena_id: string;
+  email_a: string; nombre_a: string; entrega_a: string; recibe_a: string;
+  email_b: string; nombre_b: string; entrega_b: string; recibe_b: string;
+  email_c: string; nombre_c: string; entrega_c: string; recibe_c: string;
+}
+
 function armarMail(opts: {
   nombre: string;
   motoPropia: string;
@@ -61,6 +68,48 @@ function armarMail(opts: {
 </body></html>`;
 }
 
+function armarMailCadena(opts: {
+  nombre: string;
+  entrega: string;
+  recibe: string;
+}) {
+  const { nombre, entrega, recibe } = opts;
+  return `<!doctype html>
+<html lang="es"><body style="margin:0;background:#f7f5f2;font-family:Arial,Helvetica,sans-serif;color:#14141f">
+  <div style="max-width:520px;margin:0 auto;padding:28px 16px">
+    <div style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e6e2dc">
+      <div style="background:#C8102E;padding:18px 24px">
+        <span style="color:#fff;font-size:20px;font-weight:800;letter-spacing:-0.5px">MOTO<span style="opacity:.85">CAMBIO</span></span>
+      </div>
+      <div style="padding:28px 24px">
+        <h1 style="margin:0 0 6px;font-size:24px">🔁 ¡Se armó una cadena de cambio!</h1>
+        <p style="margin:0 0 16px;color:#44445a;font-size:15px;line-height:1.55">Hola ${nombre},</p>
+        <p style="margin:0 0 14px;color:#44445a;font-size:15px;line-height:1.55">
+          El cambio no cerraba entre dos… pero sí <b>entre tres</b>. En este círculo,
+          vos entregás tu <b>${entrega}</b> y recibís la <b>${recibe}</b> que estabas
+          buscando. Los otros dos también reciben la moto que querían.
+        </p>
+        <p style="margin:0 0 22px;color:#44445a;font-size:15px;line-height:1.55">
+          Entrá a tu garage para ver el círculo completo y charlar con los otros
+          dos en el chat de la cadena.
+        </p>
+        <a href="https://motocambio.com.ar/garage"
+           style="display:inline-block;background:#C8102E;color:#fff;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:12px">
+          Ver mi cadena →
+        </a>
+        <p style="margin:26px 0 0;color:#6b6b7b;font-size:12px;line-height:1.5">
+          La verificación de las motos y las transferencias corren por cuenta de las partes.
+          Consejos para un cambio seguro en motocambio.com.ar.
+        </p>
+      </div>
+    </div>
+    <p style="text-align:center;color:#6b6b7b;font-size:11px;margin:14px 0 0">
+      Recibís este mail porque tenés una publicación o búsqueda activa en Motocambio.
+    </p>
+  </div>
+</body></html>`;
+}
+
 export async function POST() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const claveServicio = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -80,12 +129,21 @@ export async function POST() {
     return NextResponse.json({ ok: false });
   }
   const pendientes = (data as MatchPendiente[]) || [];
-  if (pendientes.length === 0) return NextResponse.json({ ok: true, enviados: 0 });
+
+  // Cadenas de a tres sin avisar (si el SQL 9.6 todavía no corrió,
+  // esta llamada falla sin romper nada y seguimos solo con matches).
+  const cadenasR = await supabase.rpc("cadenas_a_notificar");
+  const cadenasPend = (!cadenasR.error && (cadenasR.data as CadenaPendiente[])) || [];
+
+  if (pendientes.length === 0 && cadenasPend.length === 0)
+    return NextResponse.json({ ok: true, enviados: 0 });
 
   if (!claveResend) {
     // Sin Resend configurado no se pierde nada: quedan pendientes
     // y los matches igual se ven en el garage.
-    return NextResponse.json({ ok: true, enviados: 0, pendientes: pendientes.length });
+    return NextResponse.json({
+      ok: true, enviados: 0, pendientes: pendientes.length + cadenasPend.length,
+    });
   }
 
   const resend = new Resend(claveResend);
@@ -122,6 +180,34 @@ export async function POST() {
     }
     if (algunoSalio) {
       await supabase.from("matches").update({ notificado: true }).eq("id", m.match_id);
+      avisados++;
+    }
+  }
+
+  // Avisos de cadenas: un mail a cada una de las tres personas.
+  for (const c of cadenasPend) {
+    const destinos = [
+      { para: c.email_a, nombre: c.nombre_a, entrega: c.entrega_a, recibe: c.recibe_a },
+      { para: c.email_b, nombre: c.nombre_b, entrega: c.entrega_b, recibe: c.recibe_b },
+      { para: c.email_c, nombre: c.nombre_c, entrega: c.entrega_c, recibe: c.recibe_c },
+    ];
+    let algunoSalio = false;
+    for (const d of destinos) {
+      try {
+        const { error: errMail } = await resend.emails.send({
+          from: "Motocambio <contacto@motocambio.com.ar>",
+          to: d.para,
+          subject: `🔁 ¡Cadena de cambio! Tu ${d.entrega} entra en un círculo de 3`,
+          html: armarMailCadena({ nombre: d.nombre, entrega: d.entrega, recibe: d.recibe }),
+        });
+        if (!errMail) algunoSalio = true;
+        else console.error("[Motocambio] Resend (cadena):", errMail);
+      } catch (e) {
+        console.error("[Motocambio] Error mandando mail de cadena:", e);
+      }
+    }
+    if (algunoSalio) {
+      await supabase.from("cadenas").update({ notificado: true }).eq("id", c.cadena_id);
       avisados++;
     }
   }

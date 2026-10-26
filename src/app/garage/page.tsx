@@ -75,6 +75,25 @@ interface MatchInfo {
   concretado_por: string | null;
 }
 
+// Una cadena de cambio (3 personas), vista desde este usuario.
+interface CadenaInfo {
+  cadena_id: string;
+  estado: string;
+  confirme: boolean;
+  confirmaciones: number;
+  mi_moto: string;
+  recibo_marca: string;
+  recibo_modelo: string;
+  recibo_anio: number;
+  recibo_km: number;
+  recibo_provincia: string | null;
+  recibo_fotos: string[];
+  recibo_de: string;
+  entrego_a: string;
+  tercera_moto: string;
+  no_leidos: number;
+}
+
 // Comprime una foto en el navegador antes de subirla (máx 1280px, JPEG)
 async function comprimirFoto(archivo: File): Promise<Blob> {
   const img = document.createElement("img");
@@ -124,6 +143,7 @@ export default function Garage() {
   const [errorCatalogo, setErrorCatalogo] = useState("");
   const [motos, setMotos] = useState<Moto[]>([]);
   const [matches, setMatches] = useState<MatchInfo[]>([]);
+  const [cadenas, setCadenas] = useState<CadenaInfo[]>([]);
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [aviso, setAviso] = useState("");
 
@@ -202,12 +222,13 @@ export default function Garage() {
     if (!user) return;
     setUserId(user.id);
 
-    const [perfilR, motosR, busR, matchesR, opsR] = await Promise.all([
+    const [perfilR, motosR, busR, matchesR, opsR, cadenasR] = await Promise.all([
       supabase.from("perfiles").select("nombre, tipo, es_admin, telefono").eq("id", user.id).single(),
       supabase.from("motos").select("*").eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.from("busquedas").select("*, busqueda_modelos(modelo_id), busqueda_acepta(descripcion)").eq("usuario", user.id).eq("activa", true).limit(1),
       supabase.rpc("mis_matches"),
       supabase.from("oportunidades").select("*"),
+      supabase.rpc("mis_cadenas"),
     ]);
 
     const misMotoIds = ((motosR.data as Moto[]) || []).map((m) => m.id);
@@ -225,6 +246,8 @@ export default function Garage() {
     setMotos((motosR.data as Moto[]) || []);
     if (matchesR.error) console.error("[Motocambio] Error cargando matches:", matchesR.error);
     setMatches((matchesR.data as MatchInfo[]) || []);
+    // Las cadenas pueden no existir todavía en la base (hasta correr el SQL 9.6)
+    if (!cadenasR.error) setCadenas((cadenasR.data as CadenaInfo[]) || []);
 
     const b = busR.data?.[0];
     if (b) {
@@ -636,6 +659,69 @@ export default function Garage() {
             </div>
           )}
         </section>
+
+        {/* ---------- TUS CADENAS (solo si hay) ---------- */}
+        {cadenas.length > 0 && (
+          <section className="mb-10">
+            <h2 className="font-titulos font-extrabold text-xl mb-1">🔁 Tus cadenas de cambio</h2>
+            <p className="text-sm text-gris mb-3">
+              El cambio no cerraba entre dos, pero sí entre tres: cada uno entrega
+              su moto y recibe la que buscaba.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {cadenas.map((cd) => (
+                <div key={cd.cadena_id} className={`bg-white border-2 rounded-2xl overflow-hidden shadow-sm ${
+                  cd.estado === "concretada" ? "border-verde-ok" : "border-linea"
+                }`}>
+                  {cd.recibo_fotos?.length ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={cd.recibo_fotos[0]} alt="" className="h-36 w-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="h-36 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex gap-1.5 flex-wrap">
+                      <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-asfalto text-white">
+                        🔁 Cadena de 3
+                      </span>
+                      {cd.estado === "concretada" ? (
+                        <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-verde-ok text-white">
+                          🤝 Concretada
+                        </span>
+                      ) : cd.confirmaciones > 0 ? (
+                        <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-[#FDF1E3] text-ambar">
+                          🤝 {cd.confirmaciones} de 3 confirmaron
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="font-titulos font-extrabold text-[15px] mt-2">
+                      Recibís: {cd.recibo_marca} {cd.recibo_modelo} · {cd.recibo_anio}
+                    </h3>
+                    <p className="text-xs text-gris mt-0.5">
+                      {Number(cd.recibo_km).toLocaleString("es-AR")} km
+                      {cd.recibo_provincia ? ` · ${cd.recibo_provincia}` : ""} · de <b>{cd.recibo_de}</b>
+                    </p>
+                    <p className="text-xs text-tinta2 mt-1.5">
+                      Tu <b>{cd.mi_moto}</b> va para <b>{cd.entrego_a}</b>, y su{" "}
+                      <b>{cd.tercera_moto}</b> cierra el círculo.
+                    </p>
+                    <Link
+                      href={`/cadena/${cd.cadena_id}`}
+                      className="mt-3 flex items-center justify-center gap-2 bg-asfalto hover:opacity-90 text-white text-sm font-titulos font-extrabold rounded-xl py-2.5"
+                    >
+                      💬 {Number(cd.no_leidos) > 0 ? "Responder" : "Chat de a tres"}
+                      {Number(cd.no_leidos) > 0 && (
+                        <span className="bg-rojo text-white text-[11px] font-bold rounded-full px-2 py-0.5">
+                          {cd.no_leidos} nuevo{Number(cd.no_leidos) > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ---------- MIS MOTOS ---------- */}
         <section className="mb-10">

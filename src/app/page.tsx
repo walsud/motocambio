@@ -73,7 +73,7 @@ const FAQS: [string, string][] = [
   ],
   [
     "¿Qué es un match en cadena?",
-    "A veces el cambio no cierra entre dos, pero sí entre tres: vos querés la moto de B, B quiere la de C, y C quiere la tuya. La detección automática de estos círculos es nuestra arma secreta para multiplicar los cambios posibles — está en camino para la próxima etapa de la beta.",
+    "A veces el cambio no cierra entre dos, pero sí entre tres: vos querés la moto de B, B quiere la de C, y C quiere la tuya. Motocambio detecta estos círculos automáticamente: cuando se arma uno, les avisamos a los tres por mail, lo ven en su garage y se abre un chat de a tres para coordinar el cambio. Para concretarlo tienen que confirmar los tres.",
   ],
   [
     "¿Cómo se hace la transferencia de las dos motos?",
@@ -205,16 +205,16 @@ export default function Inicio() {
               </p>
             </div>
             <div className="bg-asfalto text-white rounded-2xl p-6 relative">
-              <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wide bg-white/15 rounded-full px-2.5 py-1">
-                Próximamente
+              <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wide bg-verde-ok/20 text-verde-ok rounded-full px-2.5 py-1">
+                Nuevo
               </span>
               <p className="text-3xl">🔁</p>
               <h3 className="font-titulos font-extrabold text-lg mt-3">Cambios en cadena</h3>
               <p className="text-sm text-[#C9C9D9] mt-2 leading-relaxed">
                 Si el cambio no cierra entre dos, lo armamos{" "}
                 <b className="text-[#FF7A8E]">entre tres</b>: vos querés la de B,
-                B quiere la de C, C quiere la tuya. Todos reciben la moto que
-                buscan. En camino para esta beta.
+                B quiere la de C, C quiere la tuya. Cuando se arma el círculo,
+                les avisamos a los tres y se abre un chat para coordinar.
               </p>
             </div>
             <div className="bg-asfalto text-white rounded-2xl p-6">
