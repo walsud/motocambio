@@ -104,7 +104,7 @@ export default function Explorar() {
       <main className="max-w-5xl mx-auto px-4 py-8 pb-24">
         <h1 className="font-titulos font-black text-3xl tracking-tight">Explorar motos</h1>
         <p className="text-gris mt-1 mb-6">
-          Todas +300cc, todas para cambiar. ¿Viste una que te gusta? Sumala a tu búsqueda y que el matching trabaje.
+          Todas +250cc, todas para cambiar. ¿Viste una que te gusta? Sumala a tu búsqueda y que el matching trabaje.
         </p>
 
         <SeBuscan logueado={logueado} compacto />

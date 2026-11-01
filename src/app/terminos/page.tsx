@@ -46,7 +46,7 @@ export default function Terminos() {
           <section>
             <h2 className="font-titulos font-extrabold text-asfalto mb-1">3. Reglas de publicación</h2>
             <p>
-              Se publican motos de 300 cc en adelante, a nombre del usuario o
+              Se publican motos de 250 cc en adelante, a nombre del usuario o
               con el formulario 08 firmado por el titular. Las motos de menor
               cilindrada pueden registrarse como &quot;moto de entrega&quot;: no
               aparecen en los listados, pero participan del matching. Las

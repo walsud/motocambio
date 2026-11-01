@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { CC_MINIMO_PUBLICACION } from "@/reglas";
 
 export interface ModeloCatalogo {
   id: number;
@@ -26,7 +27,7 @@ export function Autocompletar({
 
   const opciones = useMemo(() => {
     const base = soloPublicables
-      ? catalogo.filter((m) => m.cilindrada >= 280)
+      ? catalogo.filter((m) => m.cilindrada >= CC_MINIMO_PUBLICACION)
       : catalogo;
     const q = texto.trim().toLowerCase().replace(/\s+/g, " ");
     if (!q) return base.slice(0, 8);

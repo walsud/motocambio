@@ -20,10 +20,10 @@ export const metadata: Metadata = {
     template: "%s · Motocambio",
   },
   description:
-    "La primera plataforma argentina de permutas de motos +300cc. Publicá la que tenés, contá cuál buscás, y te avisamos cuando hay match.",
+    "La primera plataforma argentina de permutas de motos +250cc. Publicá la que tenés, contá cuál buscás, y te avisamos cuando hay match.",
   keywords: [
     "permuta de motos", "cambio de motos", "permuto moto", "motos usadas argentina",
-    "cambiar moto", "permuta motos 300cc", "trueque de motos",
+    "cambiar moto", "permuta motos 250cc", "trueque de motos",
   ],
   alternates: { canonical: "/" },
   openGraph: {
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
     siteName: "Motocambio",
     title: "Motocambio — Tu moto no se vende. Cambiala.",
     description:
-      "Publicá la moto que tenés, contá cuál buscás, y te avisamos cuando hay match. Permutas de motos +300cc en Argentina.",
+      "Publicá la moto que tenés, contá cuál buscás, y te avisamos cuando hay match. Permutas de motos +250cc en Argentina.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Motocambio — Tu moto no se vende. Cambiala.",
     description:
-      "La primera plataforma argentina de permutas de motos +300cc. Gratis durante la beta.",
+      "La primera plataforma argentina de permutas de motos +250cc. Gratis durante la beta.",
   },
 };
 

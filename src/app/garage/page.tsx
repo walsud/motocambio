@@ -7,6 +7,7 @@ import { type ModeloCatalogo } from "@/components/Autocompletar";
 import { SelectorModelo } from "@/components/SelectorModelo";
 import { SeBuscan } from "@/components/SeBuscan";
 import { ConsultasOportunidades } from "@/components/ConsultasOportunidades";
+import { CC_MINIMO_PUBLICACION } from "@/reglas";
 
 const PROVINCIAS = [
   "CABA", "Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán",
@@ -361,8 +362,8 @@ export default function Garage() {
       if (error) {
         setGuardandoMoto(false);
         avisar(
-          error.message.includes("300")
-            ? "Ese modelo es de menos de 300cc: solo puede quedar como moto de entrega."
+          error.message.includes("250") || error.message.includes("300")
+            ? "Ese modelo es de menos de 250cc: solo puede quedar como moto de entrega."
             : "No se pudo guardar: " + error.message
         );
         return;
@@ -426,8 +427,8 @@ export default function Garage() {
     if (error || !nueva) {
       setGuardandoMoto(false);
       avisar(
-        error?.message.includes("300")
-          ? "Ese modelo es de menos de 300cc: cargalo como moto de entrega."
+        error?.message.includes("250") || error?.message.includes("300")
+          ? "Ese modelo es de menos de 250cc: cargalo como moto de entrega."
           : "No se pudo guardar: " + (error?.message || "error")
       );
       return;
@@ -926,9 +927,9 @@ export default function Garage() {
                     {catalogo.length > 0 && <NotaFaltaModelo total={catalogo.length} />}
                   </div>
                 )}
-                {modeloSel && modeloSel.cilindrada < 280 && (
+                {modeloSel && modeloSel.cilindrada < CC_MINIMO_PUBLICACION && (
                   <p className="text-xs text-ambar mt-1.5">
-                    Este modelo es de menos de 300cc: solo puede cargarse como <b>moto de entrega</b>.
+                    Este modelo es de menos de 250cc: solo puede cargarse como <b>moto de entrega</b>.
                   </p>
                 )}
               </div>
@@ -967,11 +968,11 @@ export default function Garage() {
                 Visibilidad
                 <div className="mt-1.5 flex gap-2">
                   <button type="button" onClick={() => setVisibilidad("publicada")}
-                    disabled={!!modeloSel && modeloSel.cilindrada < 280}
+                    disabled={!!modeloSel && modeloSel.cilindrada < CC_MINIMO_PUBLICACION}
                     className={`flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold disabled:opacity-40 ${
                       visibilidad === "publicada" ? "border-rojo bg-[#FBF0F1] text-rojo" : "border-linea text-tinta2"
                     }`}>
-                    Publicada (+300cc)
+                    Publicada (+250cc)
                   </button>
                   <button type="button" onClick={() => setVisibilidad("entrega")}
                     className={`flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold ${
@@ -1120,7 +1121,7 @@ export default function Garage() {
           <section id="que-busco" className="min-w-0 bg-white border border-linea rounded-2xl shadow-sm p-6 scroll-mt-24">
             <h2 className="font-titulos font-extrabold text-xl mb-1">🎯 Qué busco</h2>
             <p className="text-sm text-gris mb-5">
-              Podés buscar cualquier cilindrada: publicás +300, pedís lo que quieras.
+              Podés buscar cualquier cilindrada: publicás +250, pedís lo que quieras.
             </p>
             <div className="flex flex-col gap-4">
               <div>

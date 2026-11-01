@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Explorar motos en permuta",
-  description: "Todas las motos +300cc publicadas para cambiar en Argentina. Filtrá por marca y provincia, mirá fotos y precios, y sumá la que te gusta a tu búsqueda.",
+  description: "Todas las motos +250cc publicadas para cambiar en Argentina. Filtrá por marca y provincia, mirá fotos y precios, y sumá la que te gusta a tu búsqueda.",
   alternates: { canonical: "/explorar" },
 };
 

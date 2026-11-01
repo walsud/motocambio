@@ -85,11 +85,11 @@ const FAQS: [string, string][] = [
   ],
   [
     "¿Qué motos se pueden publicar?",
-    "Se publican motos de 300 cc en adelante, de cualquier marca y en todo el país. Pero a cambio podés pedir o aceptar lo que quieras: un scooter 0 km, una moto de menor cilindrada más diferencia a tu favor, o directamente efectivo. La moto tiene que estar a tu nombre o tener el 08 firmado por el titular.",
+    "Se publican motos de 250 cc en adelante, de cualquier marca y en todo el país (desde noviembre de 2026 bajamos el piso de 300 a 250, por pedido de la comunidad). Pero a cambio podés pedir o aceptar lo que quieras: un scooter 0 km, una moto de menor cilindrada más diferencia a tu favor, o directamente efectivo. La moto tiene que estar a tu nombre o tener el 08 firmado por el titular.",
   ],
   [
-    "Tengo una moto de menos de 300 cc y quiero una más grande, ¿puedo?",
-    "Sí, con la moto de entrega: cargás tu moto (de cualquier cilindrada) junto con la búsqueda de la que querés. Tu moto no aparece en los listados — la vidriera es solo +300 cc — pero el motor de matching sí la ve: si el dueño de la moto que buscás acepta la tuya como parte de pago, se produce el match igual.",
+    "Tengo una moto de menos de 250 cc y quiero una más grande, ¿puedo?",
+    "Sí, con la moto de entrega: cargás tu moto (de cualquier cilindrada) junto con la búsqueda de la que querés. Tu moto no aparece en los listados — la vidriera es solo +250 cc — pero el motor de matching sí la ve: si el dueño de la moto que buscás acepta la tuya como parte de pago, se produce el match igual.",
   ],
 ];
 
@@ -121,6 +121,14 @@ export default function Inicio() {
       <RescateCodigo />
       <HeaderApp logueado={logueado} activo="inicio" />
 
+      {/* Banda de anuncio: baja del piso a 250cc (1/11/2026) */}
+      <Link href={logueado ? "/garage" : "/registro"}
+        className="block bg-rojo text-white text-center text-[13px] sm:text-sm font-semibold px-4 py-2.5 hover:bg-rojo-oscuro transition-colors">
+        🏍️ <b className="font-titulos font-extrabold">Nuevo:</b> por pedido de la
+        comunidad, ahora se publican motos <b className="font-titulos font-extrabold">desde 250cc</b>.
+        ¿Tenés una? Subila gratis →
+      </Link>
+
       {/* ---------- HÉROE ---------- */}
       <section className="relative text-white overflow-hidden bg-asfalto">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -131,7 +139,7 @@ export default function Inicio() {
         <div className="absolute inset-0 bg-gradient-to-b from-asfalto/80 via-asfalto/55 to-asfalto/85" />
         <div className="relative max-w-5xl mx-auto px-4 py-20 sm:py-28 text-center flex flex-col items-center gap-5">
           <p className="text-xs uppercase tracking-widest font-bold text-[#8A8A9E]">
-            Permutas de motos +300 cc · Argentina
+            Permutas de motos +250 cc · Argentina
           </p>
           <h1 className="font-titulos font-black text-4xl sm:text-5xl leading-tight tracking-tight max-w-xl">
             Tu moto no se vende.
@@ -383,7 +391,7 @@ export default function Inicio() {
                 <Wordmark />
               </div>
               <p className="text-xs text-[#8A8A9E] mt-3 leading-relaxed">
-                La primera plataforma argentina de permutas de motos +300cc.
+                La primera plataforma argentina de permutas de motos +250cc.
                 Beta cerrada · primavera 2026.
               </p>
             </div>
