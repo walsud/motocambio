@@ -93,7 +93,7 @@ export default function Panel() {
         .eq("dueno", user.id).neq("estado", "cambiada").order("creado_el"),
       supabase.rpc("mis_matches"),
       supabase.from("oportunidades").select("id, moto_id, aprobada, vence_el"),
-      supabase.rpc("modelos_mas_buscados", { p_dias: 30, p_limite: 10 }),
+      supabase.rpc("modelos_mas_buscados", { p_dias: 30, p_limite: 30 }),
     ]);
     setDemanda((demandaR.data as Demanda[]) || []);
 
