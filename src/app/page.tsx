@@ -333,22 +333,47 @@ export default function Inicio() {
           </div>
         </section>
 
-        {/* ---------- BANNER CONCESIONARIOS (espacio publicitario propio) ---------- */}
+        {/* ---------- BANNER CONCESIONARIOS (espacio propio de Motocambio) ---------- */}
         <section className="pb-12">
-          <div className="relative bg-white border-2 border-dashed border-linea rounded-2xl p-6 sm:p-7 flex items-center justify-between gap-4 flex-wrap">
-            <span className="absolute -top-2.5 left-5 bg-hueso text-[10px] font-bold text-gris uppercase tracking-wider px-2">
-              Patrocinado
-            </span>
-            <div>
-              <p className="font-titulos font-extrabold text-lg">🏪 ¿Tenés concesionaria o agencia?</p>
-              <p className="text-sm text-tinta2 mt-0.5">
-                Cupos de <b>concesionario fundador</b> abiertos: plan bonificado
-                durante la beta, insignia verificada y panel de demanda del mercado.
-              </p>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rojo to-rojo-oscuro text-white p-6 sm:p-9 shadow-[0_18px_40px_-12px_rgba(200,16,46,0.55)]">
+            {/* aros decorativos de la marca */}
+            <span aria-hidden className="pointer-events-none absolute -right-16 -top-20 w-64 h-64 rounded-full border-[14px] border-white/10" />
+            <span aria-hidden className="pointer-events-none absolute -right-4 -bottom-28 w-56 h-56 rounded-full border-[10px] border-white/[0.07]" />
+
+            <div className="relative flex items-center justify-between gap-6 flex-wrap lg:flex-nowrap">
+              <div className="max-w-2xl">
+                <span className="inline-flex items-center gap-1.5 bg-white text-rojo text-[11px] font-extrabold uppercase tracking-wider rounded-full px-3 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rojo animate-pulse" />
+                  Cupos de fundador abiertos
+                </span>
+                <h2 className="font-titulos font-black text-2xl sm:text-3xl tracking-tight leading-tight mt-3">
+                  🏪 ¿Tenés concesionaria o agencia?
+                </h2>
+                <p className="text-sm sm:text-base text-white/85 mt-1.5 leading-relaxed">
+                  Sumate como <b className="text-white">concesionario fundador</b> y mostrá tu stock
+                  a moteros que ya están buscando cambiar.
+                </p>
+                <ul className="flex flex-wrap gap-2 mt-4">
+                  {[
+                    "🎁 Gratis durante la beta",
+                    "🏷️ Insignia de Concesionario",
+                    "📊 Panel de demanda del mercado",
+                    "📦 Gestor de stock incluido",
+                  ].map((b) => (
+                    <li key={b} className="bg-white/12 border border-white/20 rounded-full px-3 py-1.5 text-[13px] font-semibold">
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                href="/panel"
+                className="group shrink-0 inline-flex items-center gap-2 bg-white text-rojo hover:bg-hueso font-titulos font-black text-base sm:text-lg rounded-xl px-7 py-4 shadow-lg transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Quiero ser fundador
+                <span className="transition-transform group-hover:translate-x-1">→</span>
+              </Link>
             </div>
-            <Link href="/panel" className="bg-asfalto hover:opacity-90 text-white font-titulos font-extrabold rounded-xl px-6 py-3">
-              Quiero ser fundador →
-            </Link>
           </div>
         </section>
 
