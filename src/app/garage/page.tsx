@@ -169,6 +169,23 @@ export default function Garage() {
   const [archivos, setArchivos] = useState<File[]>([]);
   const [guardandoMoto, setGuardandoMoto] = useState(false);
   const [confirmarSinFotos, setConfirmarSinFotos] = useState(false);
+  const [hayVerticales, setHayVerticales] = useState(false);
+
+  // Mira las fotos elegidas y avisa si alguna es vertical (en las
+  // tarjetas de la vidriera se recortan feo).
+  async function revisarOrientacion(files: File[]) {
+    let verticales = 0;
+    for (const f of files.slice(0, 6)) {
+      try {
+        const bmp = await createImageBitmap(f);
+        if (bmp.height > bmp.width) verticales++;
+        bmp.close();
+      } catch {
+        // si no se puede leer, no molestamos
+      }
+    }
+    setHayVerticales(verticales > 0);
+  }
   // --- edición de una moto ya cargada ---
   const [motoEditando, setMotoEditando] = useState<Moto | null>(null);
   const [fotosExistentes, setFotosExistentes] = useState<string[]>([]);
@@ -299,7 +316,7 @@ export default function Garage() {
     setVisibilidad("publicada"); setArchivos([]);
     setAccesoriosSel([]); setOtroAccesorio("");
     setMotoEditando(null); setFotosExistentes([]);
-    setConfirmarSinFotos(false);
+    setConfirmarSinFotos(false); setHayVerticales(false);
   }
 
   // ---------- EDICIÓN ----------
@@ -332,11 +349,12 @@ export default function Garage() {
       avisar("Elegí el modelo del catálogo (escribí y seleccioná de la lista).");
       return;
     }
-    // Sin fotos: primera vez avisamos; el segundo toque publica igual.
+    // Publicar en la vidriera exige al menos una foto. La moto de
+    // entrega puede ir sin foto: no sale en los listados.
     const sinFotos = motoEditando
       ? fotosExistentes.length === 0 && archivos.length === 0
       : archivos.length === 0;
-    if (sinFotos && !confirmarSinFotos) {
+    if (sinFotos && visibilidad === "publicada") {
       setConfirmarSinFotos(true);
       return;
     }
@@ -1061,12 +1079,25 @@ export default function Garage() {
               </div>
               {motoEditando && fotosExistentes.length > 0 && (
                 <div className="text-sm font-semibold">
-                  Fotos actuales — tocá la ✕ para sacar una
+                  Fotos actuales — la primera es la <b className="text-rojo">portada</b>; tocá ★ para cambiarla, ✕ para sacar una
                   <div className="flex flex-wrap gap-2.5 mt-2">
-                    {fotosExistentes.map((u) => (
+                    {fotosExistentes.map((u, i) => (
                       <div key={u} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={u} alt="" className="h-16 w-16 object-cover rounded-lg border border-linea" />
+                        <img src={u} alt="" className={`h-16 w-24 object-cover rounded-lg ${i === 0 ? "border-2 border-rojo" : "border border-linea"}`} />
+                        {i === 0 ? (
+                          <span className="absolute bottom-0 left-0 right-0 bg-rojo/90 text-white text-[9px] font-bold text-center rounded-b-md py-[1px]">
+                            PORTADA
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setFotosExistentes([u, ...fotosExistentes.filter((x) => x !== u)])}
+                            className="absolute bottom-0 left-0 right-0 bg-black/65 text-white text-[9px] font-bold text-center rounded-b-md py-[1px]"
+                          >
+                            ★ Hacer portada
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setFotosExistentes(fotosExistentes.filter((x) => x !== u))}
@@ -1079,27 +1110,42 @@ export default function Garage() {
                     ))}
                   </div>
                   <p className="text-xs text-gris font-normal mt-1.5">
-                    La foto se borra recién cuando tocás «Guardar cambios».
+                    Los cambios se aplican recién cuando tocás «Guardar cambios».
                   </p>
                 </div>
               )}
+              <div className="text-[12px] bg-hueso border border-linea rounded-xl px-3.5 py-2.5 text-tinta2 leading-relaxed">
+                📸 <b>Para que tu moto se luzca:</b> sacá las fotos{" "}
+                <b>apaisadas</b> (con el celular acostado), de día y con fondo
+                despejado. La primera que elijas es la <b>portada</b> de la
+                vidriera: ideal la moto entera, de ¾ de frente. Y si la patente
+                se llega a leer, tapala o cambiá el ángulo — en la web nunca la
+                mostramos.
+              </div>
               <label className="text-sm font-semibold">
                 {motoEditando
                   ? `Agregar fotos nuevas (quedan ${Math.max(0, 6 - fotosExistentes.length)} lugares)`
                   : "Fotos (hasta 6 — se comprimen solas)"}
                 <input type="file" accept="image/*" multiple
-                  onChange={(e) => { setArchivos(Array.from(e.target.files || [])); setConfirmarSinFotos(false); }}
+                  onChange={(e) => { const fs = Array.from(e.target.files || []); setArchivos(fs); setConfirmarSinFotos(false); revisarOrientacion(fs); }}
                   className="mt-1 w-full text-sm font-normal file:mr-3 file:rounded-lg file:border-0 file:bg-asfalto file:text-white file:px-4 file:py-2 file:font-semibold" />
                 {archivos.length > 0 && (
                   <span className="text-xs text-verde-ok font-normal">{archivos.length} foto(s) lista(s) para subir</span>
                 )}
+                {hayVerticales && (
+                  <span className="block text-xs text-ambar font-semibold mt-1">
+                    📐 Elegiste fotos verticales: en las tarjetas se recortan.
+                    Si podés, sacalas de nuevo con el celular acostado.
+                  </span>
+                )}
               </label>
               {confirmarSinFotos && (
                 <div className="text-sm bg-[#FDF1E3] border border-[#EFD9BB] rounded-xl px-4 py-3 text-tinta2">
-                  📷 <b>Vas a publicar sin fotos.</b> Las motos con fotos
-                  consiguen muchos más matches: una con el celular alcanza.
-                  Elegí fotos acá arriba, o tocá el botón de nuevo para
-                  publicar igual (podés agregarlas después con ✏️ Editar).
+                  📷 <b>Para publicar en la vidriera hace falta al menos una
+                  foto</b> — una con el celular alcanza, y las motos con fotos
+                  consiguen muchos más matches. Elegí fotos acá arriba. ¿Todavía
+                  no podés sacarle una? Poné la visibilidad en <b>Moto de
+                  entrega</b> y pasala a publicada cuando tengas la foto.
                 </div>
               )}
               <div className="flex gap-3">

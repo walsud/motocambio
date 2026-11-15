@@ -50,6 +50,18 @@ interface ConcesActivo {
   motos_activas: number;
 }
 
+interface MotoEntrega {
+  id: string;
+  moto_txt: string;
+  dueno_nombre: string;
+  email: string;
+  telefono: string | null;
+  provincia: string | null;
+  fotos: number;
+  estado: string;
+  creado_el: string;
+}
+
 interface Denuncia {
   id: number;
   motivo: string;
@@ -68,22 +80,26 @@ export default function Admin() {
   const [concesActivos, setConcesActivos] = useState<ConcesActivo[]>([]);
   const [ops, setOps] = useState<OpPendiente[]>([]);
   const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
+  const [entregas, setEntregas] = useState<MotoEntrega[]>([]);
   const [revocando, setRevocando] = useState<string | null>(null);
   const [aviso, setAviso] = useState("");
 
   const cargar = useCallback(async () => {
-    const [r, c, ca, o, d] = await Promise.all([
+    const [r, c, ca, o, d, me] = await Promise.all([
       supabase.rpc("admin_resumen"),
       supabase.rpc("admin_concesionarios_pendientes"),
       supabase.rpc("admin_concesionarios_activos"),
       supabase.rpc("admin_oportunidades_pendientes"),
       supabase.rpc("admin_denuncias_pendientes"),
+      supabase.rpc("admin_motos_entrega"),
     ]);
     setResumen((r.data as Resumen) || null);
     setConces((c.data as ConcesPendiente[]) || []);
     setConcesActivos((ca.data as ConcesActivo[]) || []);
     setOps((o.data as OpPendiente[]) || []);
     setDenuncias((d.data as Denuncia[]) || []);
+    // Si el SQL 9.9 todavía no corrió, esta llamada falla sin romper nada
+    if (!me.error) setEntregas((me.data as MotoEntrega[]) || []);
   }, [supabase]);
 
   useEffect(() => {
@@ -251,6 +267,41 @@ export default function Admin() {
                   ))}
                 </div>
               </>
+            )}
+
+            {/* Motos de entrega (no salen en la vidriera) */}
+            <h2 className="font-titulos font-extrabold text-xl mt-8 mb-3">
+              🔄 Motos de entrega{" "}
+              <span className="text-sm font-semibold text-gris">({entregas.length})</span>
+            </h2>
+            {entregas.length === 0 ? (
+              <p className="text-sm text-gris bg-white border border-linea rounded-xl p-4">
+                Ninguna por ahora. Son las motos cargadas como parte de pago:
+                no salen en la vidriera, pero el matching las ve.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {entregas.map((m) => (
+                  <div key={m.id} className="bg-white border border-linea rounded-2xl p-4 flex items-center gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-titulos font-extrabold text-[14px]">
+                        {m.moto_txt}
+                        {m.estado === "pausada" && (
+                          <span className="ml-2 text-[11px] font-bold rounded-full px-2 py-0.5 bg-[#FDF1E3] text-ambar align-middle">
+                            pausada
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-gris">
+                        De <b>{m.dueno_nombre}</b> · {m.email}
+                        {m.telefono ? ` · ${m.telefono}` : ""} · {m.provincia || "—"} ·{" "}
+                        {m.fotos > 0 ? `${m.fotos} foto${m.fotos !== 1 ? "s" : ""}` : "sin fotos"} ·
+                        cargada el {new Date(m.creado_el).toLocaleDateString("es-AR")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* Oportunidades pendientes */}
