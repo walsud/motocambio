@@ -990,25 +990,27 @@ export default function Garage() {
                     className={`flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold disabled:opacity-40 ${
                       visibilidad === "publicada" ? "border-rojo bg-[#FBF0F1] text-rojo" : "border-linea text-tinta2"
                     }`}>
-                    Publicada (+250cc)
+                    🏍️ Publicada — la ven todos
                   </button>
                   <button type="button" onClick={() => setVisibilidad("entrega")}
                     className={`flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold ${
                       visibilidad === "entrega" ? "border-rojo bg-[#FBF0F1] text-rojo" : "border-linea text-tinta2"
                     }`}>
-                    Moto de entrega
+                    🙈 Oculta (moto de entrega)
                   </button>
                 </div>
                 <p className="text-xs text-gris font-normal mt-1.5">
-                  La moto de entrega no aparece en listados, pero el matching sí la ve (cualquier cilindrada).
+                  La oculta no sale en los listados, aunque el matching sí la ve.
+                  Es la opción para las motos de menos de 250cc — o para quien
+                  prefiere no mostrar la suya.
                 </p>
                 {visibilidad === "entrega" && modeloSel && modeloSel.cilindrada >= CC_MINIMO_PUBLICACION && (
                   <p className="text-xs font-semibold text-ambar bg-[#FDF1E3] border border-[#EFD9BB] rounded-lg px-3 py-2 mt-1.5">
                     ⚠️ Tu {modeloSel.marca} {modeloSel.modelo} puede salir en la
                     vidriera. Aunque la vayas a entregar en parte de pago, elegí{" "}
                     <b>Publicada</b>: en una permuta todas las motos se entregan 😉
-                    — y publicada la ven miles de interesados. Dejala como moto de
-                    entrega solo si preferís que nadie la vea.
+                    — y publicada la ven miles de interesados. Dejala Oculta solo
+                    si preferís que nadie la vea.
                   </p>
                 )}
               </div>

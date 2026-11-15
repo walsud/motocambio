@@ -147,6 +147,26 @@ export default function Admin() {
     cargar();
   }
 
+  // Mensaje listo para invitar al dueño de una moto oculta a publicarla
+  function mensajePublicar(m: MotoEntrega) {
+    return (
+      `¡Hola ${m.dueno_nombre}! Te escribo de Motocambio 👋 Vi que cargaste tu ` +
+      `${m.moto_txt} como oculta (moto de entrega) y quería avisarte que así no ` +
+      `aparece en la vidriera ni la ven los interesados. Si la querés mostrar ` +
+      `(consigue muchos más matches), entrá a motocambio.com.ar → Mi garage → ` +
+      `✏️ Editar → elegí "Publicada" → Guardar. ¡Cualquier duda me escribís!`
+    );
+  }
+
+  async function copiarMensaje(m: MotoEntrega) {
+    try {
+      await navigator.clipboard.writeText(mensajePublicar(m));
+      avisar("📋 Mensaje copiado — pegalo en WhatsApp.");
+    } catch {
+      avisar("No se pudo copiar automáticamente.");
+    }
+  }
+
   async function resolverDenuncia(d: Denuncia, estado: "resuelta" | "descartada") {
     await supabase.rpc("admin_resolver_denuncia", { p_id: d.id, p_estado: estado });
     avisar(`Denuncia #${d.id} ${estado}.`);
@@ -299,6 +319,22 @@ export default function Admin() {
                         cargada el {new Date(m.creado_el).toLocaleDateString("es-AR")}
                       </p>
                     </div>
+                    {m.fotos > 0 && (
+                      <>
+                        <a
+                          href={`mailto:${m.email}?subject=${encodeURIComponent(
+                            `Tu ${m.moto_txt} en Motocambio — ¿la publicamos?`
+                          )}&body=${encodeURIComponent(mensajePublicar(m))}`}
+                          className="border-2 border-linea text-xs font-semibold rounded-xl px-4 py-2.5 text-tinta2 hover:border-rojo"
+                        >
+                          ✉️ Invitarlo a publicar
+                        </a>
+                        <button onClick={() => copiarMensaje(m)}
+                          className="border-2 border-linea text-xs font-semibold rounded-xl px-4 py-2.5 text-tinta2 hover:border-rojo">
+                          📋 Copiar para WhatsApp
+                        </button>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
