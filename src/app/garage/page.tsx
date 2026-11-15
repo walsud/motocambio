@@ -1002,6 +1002,15 @@ export default function Garage() {
                 <p className="text-xs text-gris font-normal mt-1.5">
                   La moto de entrega no aparece en listados, pero el matching sí la ve (cualquier cilindrada).
                 </p>
+                {visibilidad === "entrega" && modeloSel && modeloSel.cilindrada >= CC_MINIMO_PUBLICACION && (
+                  <p className="text-xs font-semibold text-ambar bg-[#FDF1E3] border border-[#EFD9BB] rounded-lg px-3 py-2 mt-1.5">
+                    ⚠️ Tu {modeloSel.marca} {modeloSel.modelo} puede salir en la
+                    vidriera. Aunque la vayas a entregar en parte de pago, elegí{" "}
+                    <b>Publicada</b>: en una permuta todas las motos se entregan 😉
+                    — y publicada la ven miles de interesados. Dejala como moto de
+                    entrega solo si preferís que nadie la vea.
+                  </p>
+                )}
               </div>
               <div className="text-sm font-semibold">
                 Accesorios agregados
