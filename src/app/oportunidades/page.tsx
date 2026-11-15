@@ -33,6 +33,8 @@ export default function Oportunidades() {
   const [nombre, setNombre] = useState<string | undefined>();
   const [avisando, setAvisando] = useState<string | null>(null);
   const [avisadas, setAvisadas] = useState<string[]>([]);
+  // Qué foto de cada oportunidad se está mirando (la galería de la tarjeta)
+  const [fotoSel, setFotoSel] = useState<Record<string, number>>({});
   const [aviso, setAviso] = useState("");
 
   const cargar = useCallback(async () => {
@@ -112,7 +114,7 @@ export default function Oportunidades() {
         <h1 className="font-titulos font-black text-3xl tracking-tight">💰 Oportunidades</h1>
         <p className="text-gris mt-1 mb-6 max-w-2xl">
           Motos en venta de contado, <b>siempre por debajo de su precio de referencia</b> —
-          por eso son oportunidades. Duran 14 días y después desaparecen.
+          por eso son oportunidades. Duran 21 días y después desaparecen.
         </p>
 
         {aviso && (
@@ -148,7 +150,7 @@ export default function Oportunidades() {
                   <div className="relative">
                     {o.fotos?.length ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={o.fotos[0]} alt={`${o.marca} ${o.modelo}`} loading="lazy" decoding="async" className="h-40 w-full object-cover" />
+                      <img src={o.fotos[Math.min(fotoSel[o.id] ?? 0, o.fotos.length - 1)]} alt={`${o.marca} ${o.modelo}`} loading="lazy" decoding="async" className="h-40 w-full object-cover" />
                     ) : (
                       <div className="h-40 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
                     )}
@@ -161,6 +163,21 @@ export default function Oportunidades() {
                       ⏳ {dias} día{dias !== 1 ? "s" : ""}
                     </span>
                   </div>
+                  {(o.fotos?.length ?? 0) > 1 && (
+                    <div className="flex gap-1.5 px-2.5 py-2 bg-asfalto">
+                      {o.fotos.map((f, i) => (
+                        <button key={f} type="button"
+                          onClick={() => setFotoSel({ ...fotoSel, [o.id]: i })}
+                          aria-label={`Ver foto ${i + 1}`}
+                          className={`rounded-md overflow-hidden border-2 ${
+                            (fotoSel[o.id] ?? 0) === i ? "border-rojo" : "border-transparent opacity-70"
+                          }`}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={f} alt="" loading="lazy" className="h-9 w-12 object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="p-4 flex flex-col flex-1">
                     <h3 className="font-titulos font-extrabold text-[15px]">
                       {o.marca} {o.modelo} · {o.anio}

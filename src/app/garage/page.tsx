@@ -517,7 +517,7 @@ export default function Garage() {
     setOpFormMoto(null);
     avisar(
       opRef
-        ? "💰 ¡Publicada en Oportunidades! Dura 14 días."
+        ? "💰 ¡Publicada en Oportunidades! Dura 21 días."
         : "💰 Enviada. Como este modelo no tiene precio de referencia todavía, la revisamos y la aprobamos a mano."
     );
     cargarTodo();

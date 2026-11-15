@@ -51,7 +51,7 @@ export default function Terminos() {
               cilindrada pueden registrarse como &quot;moto de entrega&quot;: no
               aparecen en los listados, pero participan del matching. Las
               publicaciones del sector Oportunidades exigen precio de contado
-              por debajo de la referencia y vencen a los 14 días. Está
+              por debajo de la referencia y vencen a los 21 días. Está
               prohibido publicar vehículos con impedimentos legales, datos
               falsos o de terceros sin autorización.
             </p>

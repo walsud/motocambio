@@ -296,7 +296,7 @@ export default function Inicio() {
                 <p className="text-sm text-[#C9C9D9] mt-1.5 leading-relaxed">
                   Motos de contado, publicadas <b className="text-white">por debajo del
                   precio de referencia</b> de su modelo y año. Para el que quiere
-                  vender ya — y para el que caza ofertas. Vencen a los 14 días:
+                  vender ya — y para el que caza ofertas. Vencen a los 21 días:
                   si no está barata de verdad, no es oportunidad.
                 </p>
               </div>
