@@ -62,6 +62,44 @@ interface MotoEntrega {
   creado_el: string;
 }
 
+interface MatchAdmin {
+  match_id: string;
+  tipo: string;
+  estado: string;
+  creado_el: string;
+  diferencia: number | null;
+  notificado: boolean;
+  moto_a: string;
+  dueno_a: string;
+  email_a: string;
+  moto_b: string;
+  dueno_b: string;
+  email_b: string;
+  concretado_por_txt: string | null;
+}
+
+interface CadenaAdmin {
+  cadena_id: string;
+  estado: string;
+  creado_el: string;
+  confirmaciones: number;
+  notificado: boolean;
+  moto_a: string;
+  dueno_a: string;
+  moto_b: string;
+  dueno_b: string;
+  moto_c: string;
+  dueno_c: string;
+}
+
+// Etiqueta legible para el estado de un match
+function estadoMatch(e: string) {
+  if (e === "concretado") return { txt: "✓ Concretado", cls: "bg-[#E8F5EC] text-verde-ok" };
+  if (e === "aceptado_por_uno") return { txt: "Aceptado por uno", cls: "bg-[#FDF1E3] text-ambar" };
+  if (e === "activo") return { txt: "Activo", cls: "bg-[#EEF0F4] text-tinta2" };
+  return { txt: e, cls: "bg-[#EEF0F4] text-tinta2" };
+}
+
 interface Denuncia {
   id: number;
   motivo: string;
@@ -81,17 +119,22 @@ export default function Admin() {
   const [ops, setOps] = useState<OpPendiente[]>([]);
   const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
   const [entregas, setEntregas] = useState<MotoEntrega[]>([]);
+  const [matches, setMatches] = useState<MatchAdmin[]>([]);
+  const [cadenas, setCadenas] = useState<CadenaAdmin[]>([]);
+  const [verMatches, setVerMatches] = useState(false);
   const [revocando, setRevocando] = useState<string | null>(null);
   const [aviso, setAviso] = useState("");
 
   const cargar = useCallback(async () => {
-    const [r, c, ca, o, d, me] = await Promise.all([
+    const [r, c, ca, o, d, me, ma, cd] = await Promise.all([
       supabase.rpc("admin_resumen"),
       supabase.rpc("admin_concesionarios_pendientes"),
       supabase.rpc("admin_concesionarios_activos"),
       supabase.rpc("admin_oportunidades_pendientes"),
       supabase.rpc("admin_denuncias_pendientes"),
       supabase.rpc("admin_motos_entrega"),
+      supabase.rpc("admin_matches"),
+      supabase.rpc("admin_cadenas"),
     ]);
     setResumen((r.data as Resumen) || null);
     setConces((c.data as ConcesPendiente[]) || []);
@@ -100,6 +143,9 @@ export default function Admin() {
     setDenuncias((d.data as Denuncia[]) || []);
     // Si el SQL 9.9 todavía no corrió, esta llamada falla sin romper nada
     if (!me.error) setEntregas((me.data as MotoEntrega[]) || []);
+    // Ídem con el SQL 10.2
+    if (!ma.error) setMatches((ma.data as MatchAdmin[]) || []);
+    if (!cd.error) setCadenas((cd.data as CadenaAdmin[]) || []);
   }, [supabase]);
 
   useEffect(() => {
@@ -335,6 +381,71 @@ export default function Admin() {
                         </button>
                       </>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Matches y cadenas (solo lectura) */}
+            <h2 className="font-titulos font-extrabold text-xl mt-8 mb-3">
+              🤝 Matches{" "}
+              <span className="text-sm font-semibold text-gris">
+                ({matches.length}{cadenas.length > 0 ? ` + ${cadenas.length} en cadena` : ""})
+              </span>
+              {matches.length + cadenas.length > 0 && (
+                <button onClick={() => setVerMatches(!verMatches)}
+                  className="ml-3 text-xs font-semibold text-rojo align-middle underline underline-offset-2">
+                  {verMatches ? "Ocultar" : "Ver todos"}
+                </button>
+              )}
+            </h2>
+            {matches.length + cadenas.length === 0 ? (
+              <p className="text-sm text-gris bg-white border border-linea rounded-xl p-4">
+                Todavía no hay matches. Aparecen solos cuando dos búsquedas se cruzan.
+              </p>
+            ) : !verMatches ? (
+              <p className="text-sm text-gris bg-white border border-linea rounded-xl p-4">
+                {matches.filter((m) => m.estado === "concretado").length} concretados ·{" "}
+                {matches.filter((m) => m.estado === "aceptado_por_uno").length} aceptados por uno ·{" "}
+                {matches.filter((m) => m.estado !== "concretado" && m.estado !== "aceptado_por_uno").length} activos
+                {cadenas.length > 0 ? ` · ${cadenas.length} cadena${cadenas.length !== 1 ? "s" : ""} de a 3` : ""}.
+                Tocá &quot;Ver todos&quot; para el detalle.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {matches.map((m) => {
+                  const e = estadoMatch(m.estado);
+                  return (
+                    <div key={m.match_id} className="bg-white border border-linea rounded-2xl p-4">
+                      <p className="font-titulos font-extrabold text-[14px]">
+                        {m.moto_a} <span className="text-gris font-semibold">⇄</span> {m.moto_b}
+                        <span className={`ml-2 text-[11px] font-bold rounded-full px-2 py-0.5 align-middle ${e.cls}`}>
+                          {e.txt}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gris mt-0.5">
+                        <b>{m.dueno_a}</b> ({m.email_a}) y <b>{m.dueno_b}</b> ({m.email_b})
+                        {m.diferencia != null ? ` · dif. estimada USD ${Number(m.diferencia).toLocaleString("es-AR")}` : ""}
+                        {" · "}del {new Date(m.creado_el).toLocaleDateString("es-AR")}
+                        {m.estado === "concretado" && m.concretado_por_txt ? ` · lo marcó ${m.concretado_por_txt}` : ""}
+                        {!m.notificado ? " · sin avisar aún" : ""}
+                      </p>
+                    </div>
+                  );
+                })}
+                {cadenas.map((k) => (
+                  <div key={k.cadena_id} className="bg-white border border-linea rounded-2xl p-4">
+                    <p className="font-titulos font-extrabold text-[14px]">
+                      {k.moto_a} <span className="text-gris font-semibold">→</span> {k.moto_b}{" "}
+                      <span className="text-gris font-semibold">→</span> {k.moto_c}
+                      <span className="ml-2 text-[11px] font-bold rounded-full px-2 py-0.5 align-middle bg-[#EEF0F4] text-tinta2">
+                        Cadena · {k.confirmaciones}/3 confirmaron
+                      </span>
+                    </p>
+                    <p className="text-xs text-gris mt-0.5">
+                      <b>{k.dueno_a}</b>, <b>{k.dueno_b}</b> y <b>{k.dueno_c}</b> · estado: {k.estado}
+                      {" · "}del {new Date(k.creado_el).toLocaleDateString("es-AR")}
+                    </p>
                   </div>
                 ))}
               </div>
