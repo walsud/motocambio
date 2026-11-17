@@ -284,9 +284,9 @@ export default function Garage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function avisar(texto: string) {
+  function avisar(texto: string, ms = 4000) {
     setAviso(texto);
-    setTimeout(() => setAviso(""), 4000);
+    setTimeout(() => setAviso(""), ms);
   }
 
   const nombreModelo = useCallback(
@@ -363,30 +363,6 @@ export default function Garage() {
 
     // ----- Modo edición: actualizo la publicación existente -----
     if (motoEditando) {
-      const { error } = await supabase
-        .from("motos")
-        .update({
-          modelo_id: modeloSel.id,
-          anio: parseInt(anio),
-          km: parseInt(km) || 0,
-          precio_usd: precio ? parseInt(precio) : null,
-          provincia,
-          dominio: dominio.trim().toUpperCase() || null,
-          visibilidad,
-          accesorios: accesoriosSel,
-        })
-        .eq("id", motoEditando.id);
-
-      if (error) {
-        setGuardandoMoto(false);
-        avisar(
-          error.message.includes("250") || error.message.includes("300")
-            ? "Ese modelo es de menos de 250cc: solo puede quedar como moto de entrega."
-            : "No se pudo guardar: " + error.message
-        );
-        return;
-      }
-
       // Fotos que el usuario sacó: las borro del almacenamiento
       const borradas = (motoEditando.fotos || []).filter((u) => !fotosExistentes.includes(u));
       if (borradas.length) {
@@ -394,7 +370,8 @@ export default function Garage() {
         if (rutas.length) await supabase.storage.from("fotos").remove(rutas);
       }
 
-      // Fotos nuevas: comprimo y subo hasta completar 6
+      // Fotos nuevas: comprimo y subo hasta completar 6 — ANTES de
+      // guardar, así nunca queda una moto publicada sin fotos.
       const nuevasUrls: string[] = [];
       const cupo = Math.max(0, 6 - fotosExistentes.length);
       for (let i = 0; i < Math.min(archivos.length, cupo); i++) {
@@ -412,20 +389,55 @@ export default function Garage() {
           // una foto que falla no frena la edición
         }
       }
-      await supabase
+
+      // Si eligió publicar pero ninguna foto pudo subirse, queda oculta
+      const fotosFinales = [...fotosExistentes, ...nuevasUrls];
+      const sinFotoAlFinal = fotosFinales.length === 0 && visibilidad === "publicada";
+      const { error } = await supabase
         .from("motos")
-        .update({ fotos: [...fotosExistentes, ...nuevasUrls] })
+        .update({
+          modelo_id: modeloSel.id,
+          anio: parseInt(anio),
+          km: parseInt(km) || 0,
+          precio_usd: precio ? parseInt(precio) : null,
+          provincia,
+          dominio: dominio.trim().toUpperCase() || null,
+          visibilidad: sinFotoAlFinal ? "entrega" : visibilidad,
+          accesorios: accesoriosSel,
+          fotos: fotosFinales,
+        })
         .eq("id", motoEditando.id);
+
+      if (error) {
+        setGuardandoMoto(false);
+        avisar(
+          error.message.includes("250") || error.message.includes("300")
+            ? "Ese modelo es de menos de 250cc: solo puede quedar como moto de entrega."
+            : "No se pudo guardar: " + error.message
+        );
+        return;
+      }
 
       setGuardandoMoto(false);
       limpiarFormulario();
-      avisar("✓ Publicación actualizada.");
+      if (sinFotoAlFinal) {
+        avisar(
+          "⚠️ Las fotos no se pudieron procesar, así que la moto quedó OCULTA. " +
+            "Si son HEIC del iPhone, convertilas a JPG (o mandátelas por WhatsApp y guardalas). " +
+            "Editá la moto, agregá las fotos y pasala a Publicada.",
+          12000
+        );
+      } else {
+        avisar("✓ Publicación actualizada.");
+      }
       fetch("/api/notificar-matches", { method: "POST" }).catch(() => {});
       cargarTodo();
       return;
     }
 
     // ----- Modo alta: creo una publicación nueva -----
+    // Nace oculta y recién pasa a publicada cuando al menos una foto
+    // subió bien: así nunca queda una moto publicada sin fotos.
     const { data: nueva, error } = await supabase
       .from("motos")
       .insert({
@@ -436,7 +448,7 @@ export default function Garage() {
         precio_usd: precio ? parseInt(precio) : null,
         provincia,
         dominio: dominio.trim().toUpperCase() || null,
-        visibilidad,
+        visibilidad: "entrega",
         accesorios: accesoriosSel,
       })
       .select()
@@ -469,8 +481,36 @@ export default function Garage() {
         // una foto que falla no frena el alta
       }
     }
-    if (urls.length) {
-      await supabase.from("motos").update({ fotos: urls }).eq("id", nueva.id);
+    // Con las fotos arriba, recién ahí tomo la visibilidad elegida
+    const quisoPublicar = visibilidad === "publicada";
+    if (quisoPublicar && urls.length === 0) {
+      setGuardandoMoto(false);
+      limpiarFormulario();
+      avisar(
+        "⚠️ Las fotos no se pudieron procesar, así que tu moto quedó guardada pero OCULTA. " +
+          "Si son HEIC del iPhone, convertilas a JPG (o mandátelas por WhatsApp y guardalas). " +
+          "Editá la moto, agregá las fotos y pasala a Publicada.",
+        12000
+      );
+      cargarTodo();
+      return;
+    }
+
+    const { error: errFinal } = await supabase
+      .from("motos")
+      .update({ fotos: urls, visibilidad })
+      .eq("id", nueva.id);
+    if (errFinal) {
+      setGuardandoMoto(false);
+      avisar(
+        errFinal.message.includes("250") || errFinal.message.includes("300")
+          ? "Ese modelo es de menos de 250cc: quedó cargado como moto de entrega."
+          : "Quedó cargada como oculta; no se pudo publicar: " + errFinal.message,
+        8000
+      );
+      limpiarFormulario();
+      cargarTodo();
+      return;
     }
 
     setGuardandoMoto(false);
