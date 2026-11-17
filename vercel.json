@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/mail-bienvenida",
+      "schedule": "17 13 * * *"
+    }
+  ]
+}
