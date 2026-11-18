@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
+import { VisorFotos } from "@/components/VisorFotos";
 
 interface Oportunidad {
   id: string;
@@ -35,6 +36,7 @@ export default function Oportunidades() {
   const [avisadas, setAvisadas] = useState<string[]>([]);
   // Qué foto de cada oportunidad se está mirando (la galería de la tarjeta)
   const [fotoSel, setFotoSel] = useState<Record<string, number>>({});
+  const [visor, setVisor] = useState<{ fotos: string[]; inicial: number; alt: string } | null>(null);
   const [aviso, setAviso] = useState("");
 
   const cargar = useCallback(async () => {
@@ -150,7 +152,17 @@ export default function Oportunidades() {
                   <div className="relative">
                     {o.fotos?.length ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={o.fotos[Math.min(fotoSel[o.id] ?? 0, o.fotos.length - 1)]} alt={`${o.marca} ${o.modelo}`} loading="lazy" decoding="async" className="h-40 w-full object-cover" />
+                      <img
+                        src={o.fotos[Math.min(fotoSel[o.id] ?? 0, o.fotos.length - 1)]}
+                        alt={`${o.marca} ${o.modelo}`} loading="lazy" decoding="async"
+                        onClick={() => setVisor({
+                          fotos: o.fotos,
+                          inicial: Math.min(fotoSel[o.id] ?? 0, o.fotos.length - 1),
+                          alt: `${o.marca} ${o.modelo}`,
+                        })}
+                        className="h-40 w-full object-cover cursor-zoom-in"
+                        title="Tocá para agrandar"
+                      />
                     ) : (
                       <div className="h-40 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
                     )}
@@ -250,6 +262,14 @@ export default function Oportunidades() {
           verificación policial y escribano o gestor de confianza.
         </p>
       </main>
+      {visor && (
+        <VisorFotos
+          fotos={visor.fotos}
+          inicial={visor.inicial}
+          alt={visor.alt}
+          onCerrar={() => setVisor(null)}
+        />
+      )}
     </div>
   );
 }

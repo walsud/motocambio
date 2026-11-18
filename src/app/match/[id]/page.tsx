@@ -10,6 +10,7 @@ interface MatchInfo {
   tipo: string;
   estado: string;
   mi_moto: string;
+  otra_moto_id: string;
   otra_marca: string;
   otra_modelo: string;
   otra_anio: number;
@@ -150,15 +151,18 @@ export default function Chat() {
           </div>
         ) : (
           <>
-            {/* Encabezado del match */}
-            <div className="mt-3 bg-white border border-linea rounded-2xl p-4 flex items-center gap-3">
+            {/* Encabezado del match: toca la moto para ver su ficha completa */}
+            <Link
+              href={`/moto/${match.otra_moto_id}`}
+              className="mt-3 bg-white border border-linea hover:border-rojo rounded-2xl p-4 flex items-center gap-3 transition-colors"
+            >
               {match.otra_fotos?.length ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={match.otra_fotos[0]} alt="" className="w-14 h-14 rounded-xl object-cover" />
               ) : (
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-asfalto to-[#3A1F2B] flex items-center justify-center text-2xl">🏍️</div>
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-titulos font-extrabold text-[15px] truncate">
                   {match.otro_nombre} · {match.otra_marca} {match.otra_modelo} {match.otra_anio}
                 </p>
@@ -166,7 +170,10 @@ export default function Chat() {
                   {match.tipo === "directo" ? "🎯 Match directo" : "👀 Interés parcial"} — por tu {match.mi_moto}
                 </p>
               </div>
-            </div>
+              <span className="shrink-0 text-xs font-bold text-rojo whitespace-nowrap">
+                Ver moto →
+              </span>
+            </Link>
 
             {/* Estado del cambio */}
             {match.estado === "concretado" ? (

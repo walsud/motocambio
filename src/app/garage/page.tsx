@@ -658,12 +658,14 @@ export default function Garage() {
                 <div key={mt.match_id} className={`bg-white border-2 rounded-2xl overflow-hidden shadow-sm ${
                   mt.tipo === "directo" ? "border-verde-ok" : "border-linea"
                 }`}>
-                  {mt.otra_fotos?.length ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={mt.otra_fotos[0]} alt="" className="h-36 w-full object-cover" />
-                  ) : (
-                    <div className="h-36 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
-                  )}
+                  <Link href={`/moto/${mt.otra_moto_id}`} title="Ver la moto completa">
+                    {mt.otra_fotos?.length ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={mt.otra_fotos[0]} alt="" className="h-36 w-full object-cover" />
+                    ) : (
+                      <div className="h-36 flex items-center justify-center text-5xl bg-gradient-to-br from-asfalto to-[#3A1F2B]">🏍️</div>
+                    )}
+                  </Link>
                   <div className="p-4">
     	            <div className="flex gap-1.5 flex-wrap">
                       <span className={`text-[11px] font-bold rounded-full px-2.5 py-0.5 ${
@@ -683,7 +685,10 @@ export default function Garage() {
                       )}
                     </div>
                     <h3 className="font-titulos font-extrabold text-[15px] mt-2">
-                      {mt.otra_marca} {mt.otra_modelo} · {mt.otra_anio}
+                      <Link href={`/moto/${mt.otra_moto_id}`} className="hover:text-rojo">
+                        {mt.otra_marca} {mt.otra_modelo} · {mt.otra_anio}{" "}
+                        <span className="text-[11px] font-bold text-rojo">Ver →</span>
+                      </Link>
                     </h3>
                     <p className="text-xs text-gris mt-0.5">
                       {mt.otra_km.toLocaleString("es-AR")} km · {mt.otra_provincia}

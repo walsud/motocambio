@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { HeaderApp } from "@/components/HeaderApp";
+import { VisorFotos } from "@/components/VisorFotos";
 
 interface FichaMoto {
   id: string;
@@ -29,27 +30,41 @@ export default function Ficha() {
   const [moto, setMoto] = useState<FichaMoto | null>(null);
   const [cargando, setCargando] = useState(true);
   const [fotoActiva, setFotoActiva] = useState(0);
+  const [visorAbierto, setVisorAbierto] = useState(false);
+  const [viaMatch, setViaMatch] = useState(false);
   const [logueado, setLogueado] = useState(false);
   const [nombre, setNombre] = useState<string | undefined>();
 
   useEffect(() => {
-    supabase
-      .from("motos_publicas")
-      .select("*")
-      .eq("id", id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) console.error("[Motocambio] Error cargando ficha:", error);
-        setMoto((data as FichaMoto) || null);
-        setCargando(false);
-      });
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setLogueado(true);
         const { data } = await supabase.from("perfiles").select("nombre").eq("id", user.id).single();
         if (data) setNombre(data.nombre);
       }
-    });
+
+      const { data: pub } = await supabase
+        .from("motos_publicas")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (pub) {
+        setMoto(pub as FichaMoto);
+      } else if (user) {
+        // No está en la vidriera: puede ser una moto oculta (de
+        // entrega) con la que tengo un match — la base decide.
+        const { data: fm, error } = await supabase.rpc("ficha_para_match", { p_moto: id });
+        if (error) console.error("[Motocambio] Error cargando ficha:", error.message);
+        const fila = Array.isArray(fm) ? fm[0] : fm;
+        if (fila) {
+          setMoto(fila as FichaMoto);
+          setViaMatch(true);
+        }
+      }
+      setCargando(false);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -76,6 +91,12 @@ export default function Ficha() {
           </div>
         ) : (
           <div className="mt-4 grid gap-6 lg:grid-cols-[1.4fr_1fr] items-start">
+            {viaMatch && (
+              <div className="lg:col-span-2 bg-[#FDF1E3] border border-[#EFD9BB] rounded-xl px-4 py-3 text-sm text-tinta2">
+                🔄 Esta moto no está en la vidriera pública (es una moto de
+                entrega): la podés ver porque tienen un match.
+              </div>
+            )}
             {/* Galería */}
             <section className="bg-white border border-linea rounded-2xl overflow-hidden shadow-sm">
               {moto.fotos?.length ? (
@@ -84,8 +105,18 @@ export default function Ficha() {
                   <img
                     src={moto.fotos[fotoActiva]}
                     alt={`${moto.marca} ${moto.modelo}`}
-                    className="w-full aspect-[4/3] object-cover"
+                    onClick={() => setVisorAbierto(true)}
+                    className="w-full aspect-[4/3] object-cover cursor-zoom-in"
+                    title="Tocá para agrandar"
                   />
+                  {visorAbierto && (
+                    <VisorFotos
+                      fotos={moto.fotos}
+                      inicial={fotoActiva}
+                      alt={`${moto.marca} ${moto.modelo}`}
+                      onCerrar={() => setVisorAbierto(false)}
+                    />
+                  )}
                   {moto.fotos.length > 1 && (
                     <div className="flex gap-2 p-3 overflow-x-auto">
                       {moto.fotos.map((f, i) => (
