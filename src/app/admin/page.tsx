@@ -38,6 +38,19 @@ interface OpPendiente {
   motivo: string | null;
   vendedor: string;
   creada: string;
+  precio_publicacion: number | null;
+}
+
+// Compara el contado pedido contra el valor pretendido de la publicación
+function comparacionOp(o: OpPendiente) {
+  if (o.precio_publicacion == null)
+    return { txt: "la publicación no tiene valor pretendido", cls: "text-gris" };
+  const pub = Number(o.precio_publicacion);
+  const dif = Math.round(((pub - Number(o.precio)) / pub) * 100);
+  const pubTxt = `pretende USD ${pub.toLocaleString("es-AR")} por el cambio`;
+  if (dif > 0) return { txt: `${pubTxt} → contado ${dif}% más barato`, cls: "text-verde-ok font-semibold" };
+  if (dif === 0) return { txt: `${pubTxt} → mismo precio, no baja nada`, cls: "text-ambar font-semibold" };
+  return { txt: `${pubTxt} → ⚠️ contado ${-dif}% MÁS CARO`, cls: "text-rojo font-semibold" };
 }
 
 interface ConcesActivo {
@@ -469,6 +482,9 @@ export default function Admin() {
                       </p>
                       <p className="text-xs text-gris">
                         Vende {o.vendedor}{o.motivo ? ` · "${o.motivo}"` : ""} · sin referencia de precio cargada
+                      </p>
+                      <p className={`text-xs ${comparacionOp(o).cls}`}>
+                        {comparacionOp(o).txt}
                       </p>
                     </div>
                     <button onClick={() => aprobarOp(o)}
