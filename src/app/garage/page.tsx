@@ -349,6 +349,28 @@ export default function Garage() {
       avisar("Elegí el modelo del catálogo (escribí y seleccioná de la lista).");
       return;
     }
+    // Publicar en la vidriera exige el valor pretendido, en dólares
+    // y dentro de lo razonable (la oculta puede ir sin precio).
+    if (visibilidad === "publicada") {
+      const p = parseInt(precio);
+      if (!precio || !p) {
+        avisar("Para publicar poné el valor pretendido en dólares (USD).");
+        return;
+      }
+      if (p > 100000) {
+        avisar(
+          "⚠️ El valor pretendido va en DÓLARES y ese número parece estar en pesos. " +
+            "Dividilo por la cotización y poné el valor en USD.",
+          8000
+        );
+        return;
+      }
+      if (p < 300) {
+        avisar("El valor va en dólares: revisá el número (mínimo USD 300).");
+        return;
+      }
+    }
+
     // Publicar en la vidriera exige al menos una foto. La moto de
     // entrega puede ir sin foto: no sale en los listados.
     const sinFotos = motoEditando
@@ -1010,9 +1032,12 @@ export default function Garage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-sm font-semibold">
-                  Valor pretendido (USD)
+                  Valor pretendido (en dólares)
                   <input type="number" min={0} value={precio} onChange={(e) => setPrecio(e.target.value)}
                     className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo" placeholder="9000" />
+                  <span className="block text-[11px] font-normal text-gris mt-0.5">
+                    En USD, no en pesos. Obligatorio para publicar.
+                  </span>
                 </label>
                 <label className="text-sm font-semibold">
                   Provincia

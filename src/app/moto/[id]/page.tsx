@@ -34,6 +34,30 @@ export default function Ficha() {
   const [viaMatch, setViaMatch] = useState(false);
   const [logueado, setLogueado] = useState(false);
   const [nombre, setNombre] = useState<string | undefined>();
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
+  // Compartir la ficha: menú nativo en el celular, copia el link en la compu
+  async function compartir() {
+    if (!moto) return;
+    const url = window.location.href;
+    const titulo = `${moto.marca} ${moto.modelo} ${moto.anio} en Motocambio`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: titulo, url });
+        return;
+      } catch {
+        /* canceló el menú: no hacemos nada */
+        return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopiado(true);
+      setTimeout(() => setLinkCopiado(false), 3000);
+    } catch {
+      /* sin permiso de portapapeles */
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -181,6 +205,12 @@ export default function Ficha() {
                 <p className="text-xs text-gris mt-4 pt-3 border-t border-linea">
                   Publicada por <b>{moto.dueno_nombre}</b>
                 </p>
+                <button
+                  onClick={compartir}
+                  className="mt-3 w-full border-2 border-linea hover:border-rojo text-sm font-semibold rounded-xl py-2.5 text-tinta2"
+                >
+                  {linkCopiado ? "✓ Link copiado, listo para pegar" : "📤 Compartir esta moto"}
+                </button>
               </div>
 
               <div className="bg-asfalto text-white rounded-2xl p-5">
