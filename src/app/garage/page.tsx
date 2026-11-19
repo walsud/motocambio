@@ -257,6 +257,13 @@ export default function Garage() {
     if (perfilR.data) {
       setNombre(perfilR.data.nombre);
       setTelefonoPerfil(perfilR.data.telefono || "");
+      // El celular que dejó al registrarse viaja en los metadatos del
+      // usuario; la primera vez que entra lo paso a su perfil.
+      const telMeta = ((user.user_metadata?.telefono as string) || "").trim();
+      if (!perfilR.data.telefono && telMeta) {
+        await supabase.from("perfiles").update({ telefono: telMeta }).eq("id", user.id);
+        setTelefonoPerfil(telMeta);
+      }
       setTipoPerfil(perfilR.data.tipo || "particular");
       setEsAdmin(!!perfilR.data.es_admin);
     }

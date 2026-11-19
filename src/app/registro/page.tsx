@@ -15,6 +15,7 @@ const PROVINCIAS = [
 export default function Registro() {
   const router = useRouter();
   const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [provincia, setProvincia] = useState("CABA");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +42,7 @@ export default function Registro() {
       email,
       password,
       options: {
-        data: { nombre, provincia },
+        data: { nombre, provincia, telefono: telefono.trim() },
         emailRedirectTo: `${location.origin}/login?confirmado=1`,
       },
     });
@@ -86,6 +87,21 @@ export default function Registro() {
               placeholder="Ej.: Walter"
               className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
             />
+          </label>
+          <label className="text-sm font-semibold">
+            Celular (con WhatsApp)
+            <input
+              required
+              type="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              placeholder="Ej.: 11 5555 5555"
+              className="mt-1 w-full border-2 border-linea rounded-xl px-3.5 py-2.5 font-normal outline-none focus:border-rojo"
+            />
+            <span className="block text-[11px] font-normal text-gris mt-1">
+              🔒 No se publica ni lo ve nadie: es solo para avisarte si a tu
+              publicación le falta algo (una foto, el precio) y no perder tiempo.
+            </span>
           </label>
           <label className="text-sm font-semibold">
             Provincia
