@@ -568,6 +568,18 @@ export default function Garage() {
 
   async function guardarOportunidad(m: Moto) {
     if (!opPrecio) return;
+    // El contado tiene que bajar de verdad: al menos 5% menos que el
+    // valor pretendido para el cambio (la base también lo controla).
+    if (m.precio_usd) {
+      const tope = Math.floor(Number(m.precio_usd) * 0.95);
+      if (parseInt(opPrecio) > tope) {
+        avisar(
+          `Oportunidades es para vender de contado más barato que el cambio: pedís USD ${Number(m.precio_usd).toLocaleString("es-AR")} por la permuta, así que el contado puede ser como mucho USD ${tope.toLocaleString("es-AR")} (5% menos).`,
+          9000
+        );
+        return;
+      }
+    }
     setGuardandoOp(true);
     const { error } = await supabase.from("oportunidades").insert({
       moto_id: m.id,
@@ -944,6 +956,13 @@ export default function Garage() {
                                 ? `Referencia: USD ${Number(opRef.ref_min).toLocaleString("es-AR")} – ${Number(opRef.ref_max).toLocaleString("es-AR")}. Para entrar tiene que ser menor a USD ${Number(opRef.ref_min).toLocaleString("es-AR")}.`
                                 : "Este modelo/año no tiene referencia todavía: la revisamos a mano antes de publicarla."}
                             </p>
+                            {m.precio_usd ? (
+                              <p className="text-[11px] text-gris mt-0.5">
+                                Pedís USD {Number(m.precio_usd).toLocaleString("es-AR")} por el cambio →
+                                el contado puede ser como mucho{" "}
+                                <b>USD {Math.floor(Number(m.precio_usd) * 0.95).toLocaleString("es-AR")}</b> (5% menos).
+                              </p>
+                            ) : null}
                             <input
                               type="number" min={1} value={opPrecio}
                               onChange={(e) => setOpPrecio(e.target.value)}
