@@ -28,6 +28,14 @@ interface MotoPublica {
   dueno_tipo: string;
 }
 
+// Baja un texto a minúsculas y sin acentos, para comparar parejo
+function normalizar(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
 export default function Explorar() {
   const supabase = crearClienteNavegador();
   const [motos, setMotos] = useState<MotoPublica[]>([]);
@@ -50,16 +58,6 @@ export default function Explorar() {
     setCargando(true);
     setError("");
     let consulta = supabase.from("motos_publicas").select("*");
-    if (busquedaLista) {
-      // Busca en marca y modelo juntos ("tornado", "benelli 500"…)
-      const q = busquedaLista.replace(/[,%()]/g, " ").trim();
-      if (q) {
-        const partes = q.split(/\s+/).slice(0, 4);
-        for (const p of partes) {
-          consulta = consulta.or(`marca.ilike.*${p}*,modelo.ilike.*${p}*`);
-        }
-      }
-    }
     if (marca) consulta = consulta.eq("marca", marca);
     if (provincia) consulta = consulta.eq("provincia", provincia);
     if (categoria) consulta = consulta.eq("categoria", categoria);
@@ -71,12 +69,22 @@ export default function Explorar() {
         nullsFirst: false,
       });
     }
-    const { data, error: err } = await consulta.limit(60);
+    // Cuando hay texto de búsqueda traigo más y filtro acá, ignorando
+    // acentos y mayúsculas ("tenere" encuentra la Ténéré).
+    const { data, error: err } = await consulta.limit(busquedaLista ? 300 : 60);
     if (err) {
       console.error("[Motocambio] Error cargando motos públicas:", err);
       setError(err.message);
     }
-    setMotos((data as MotoPublica[]) || []);
+    let lista = (data as MotoPublica[]) || [];
+    if (busquedaLista) {
+      const partes = normalizar(busquedaLista).split(/\s+/).filter(Boolean).slice(0, 4);
+      lista = lista.filter((m) => {
+        const texto = normalizar(`${m.marca} ${m.modelo}`);
+        return partes.every((p) => texto.includes(p));
+      });
+    }
+    setMotos(lista);
     setCargando(false);
   }, [supabase, marca, provincia, orden, categoria, busquedaLista]);
 
