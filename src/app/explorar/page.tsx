@@ -38,6 +38,8 @@ export default function Explorar() {
   const [nombre, setNombre] = useState<string | undefined>();
 
   // filtros
+  const [busqueda, setBusqueda] = useState("");
+  const [busquedaLista, setBusquedaLista] = useState(""); // la aplico con una pausa, para no consultar en cada tecla
   const [marca, setMarca] = useState("");
   const [provincia, setProvincia] = useState("");
   const [orden, setOrden] = useState<"recientes" | "precio_asc" | "precio_desc">("recientes");
@@ -48,6 +50,16 @@ export default function Explorar() {
     setCargando(true);
     setError("");
     let consulta = supabase.from("motos_publicas").select("*");
+    if (busquedaLista) {
+      // Busca en marca y modelo juntos ("tornado", "benelli 500"…)
+      const q = busquedaLista.replace(/[,%()]/g, " ").trim();
+      if (q) {
+        const partes = q.split(/\s+/).slice(0, 4);
+        for (const p of partes) {
+          consulta = consulta.or(`marca.ilike.*${p}*,modelo.ilike.*${p}*`);
+        }
+      }
+    }
     if (marca) consulta = consulta.eq("marca", marca);
     if (provincia) consulta = consulta.eq("provincia", provincia);
     if (categoria) consulta = consulta.eq("categoria", categoria);
@@ -66,11 +78,17 @@ export default function Explorar() {
     }
     setMotos((data as MotoPublica[]) || []);
     setCargando(false);
-  }, [supabase, marca, provincia, orden, categoria]);
+  }, [supabase, marca, provincia, orden, categoria, busquedaLista]);
 
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  // Espera 350 ms después de la última tecla antes de buscar
+  useEffect(() => {
+    const t = setTimeout(() => setBusquedaLista(busqueda.trim()), 350);
+    return () => clearTimeout(t);
+  }, [busqueda]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -111,6 +129,13 @@ export default function Explorar() {
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-2.5 mb-6">
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="🔍 Buscar marca o modelo…"
+            className="w-full sm:w-64 border-2 border-linea rounded-xl px-3.5 py-2 text-sm font-semibold bg-white outline-none focus:border-rojo"
+          />
           <select value={marca} onChange={(e) => setMarca(e.target.value)}
             className="border-2 border-linea rounded-xl px-3 py-2 text-sm font-semibold bg-white outline-none focus:border-rojo">
             <option value="">Todas las marcas</option>
@@ -132,8 +157,8 @@ export default function Explorar() {
             <option value="precio_asc">Menor precio</option>
             <option value="precio_desc">Mayor precio</option>
           </select>
-          {(marca || provincia || categoria) && (
-            <button onClick={() => { setMarca(""); setProvincia(""); setCategoria(""); }}
+          {(marca || provincia || categoria || busqueda) && (
+            <button onClick={() => { setMarca(""); setProvincia(""); setCategoria(""); setBusqueda(""); }}
               className="text-sm font-semibold text-rojo px-2">
               ✕ Limpiar
             </button>
@@ -153,7 +178,7 @@ export default function Explorar() {
           <p className="text-sm text-gris">Cargando motos…</p>
         ) : motos.length === 0 && !error ? (
           <div className="text-sm text-gris bg-white border border-linea rounded-xl p-6">
-            {marca || provincia
+            {marca || provincia || categoria || busquedaLista
               ? "No hay motos publicadas con esos filtros (por ahora 😉). Probá ampliar la búsqueda."
               : "Todavía no hay motos publicadas. ¡Sé el primero: cargá la tuya desde Mi garage!"}
           </div>
