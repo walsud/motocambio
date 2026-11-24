@@ -35,6 +35,33 @@ export default function Ficha() {
   const [logueado, setLogueado] = useState(false);
   const [nombre, setNombre] = useState<string | undefined>();
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false);
+  const [confirmaQuitar, setConfirmaQuitar] = useState<string | null>(null);
+  const [quitando, setQuitando] = useState(false);
+  const [modAviso, setModAviso] = useState<{
+    email: string; dueno: string; moto_txt: string; quedo_oculta: boolean;
+  } | null>(null);
+
+  // Moderación: quitar una foto puntual (solo administradores)
+  async function quitarFoto(url: string) {
+    if (!moto || quitando) return;
+    setQuitando(true);
+    const { data, error } = await supabase.rpc("admin_quitar_foto", {
+      p_moto: moto.id,
+      p_url: url,
+    });
+    setQuitando(false);
+    setConfirmaQuitar(null);
+    if (error) {
+      console.error("[Motocambio] Error quitando foto:", error.message);
+      return;
+    }
+    const r = Array.isArray(data) ? data[0] : data;
+    const fotosNuevas = moto.fotos.filter((f) => f !== url);
+    setMoto({ ...moto, fotos: fotosNuevas });
+    setFotoActiva(0);
+    if (r) setModAviso(r as typeof modAviso);
+  }
 
   // Compartir la ficha: menú nativo en el celular, copia el link en la compu
   async function compartir() {
@@ -64,8 +91,11 @@ export default function Ficha() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setLogueado(true);
-        const { data } = await supabase.from("perfiles").select("nombre").eq("id", user.id).single();
-        if (data) setNombre(data.nombre);
+        const { data } = await supabase.from("perfiles").select("nombre, es_admin").eq("id", user.id).single();
+        if (data) {
+          setNombre(data.nombre);
+          setEsAdmin(!!data.es_admin);
+        }
       }
 
       const { data: pub } = await supabase
@@ -141,20 +171,57 @@ export default function Ficha() {
                       onCerrar={() => setVisorAbierto(false)}
                     />
                   )}
-                  {moto.fotos.length > 1 && (
+                  {(moto.fotos.length > 1 || esAdmin) && (
                     <div className="flex gap-2 p-3 overflow-x-auto">
                       {moto.fotos.map((f, i) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          key={f}
-                          src={f}
-                          alt=""
-                          onClick={() => setFotoActiva(i)}
-                          className={`h-16 w-16 object-cover rounded-lg cursor-pointer border-2 ${
-                            i === fotoActiva ? "border-rojo" : "border-transparent opacity-70 hover:opacity-100"
-                          }`}
-                        />
+                        <div key={f} className="relative shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={f}
+                            alt=""
+                            onClick={() => setFotoActiva(i)}
+                            className={`h-16 w-16 object-cover rounded-lg cursor-pointer border-2 ${
+                              i === fotoActiva ? "border-rojo" : "border-transparent opacity-70 hover:opacity-100"
+                            }`}
+                          />
+                          {esAdmin && (
+                            <button
+                              onClick={() =>
+                                confirmaQuitar === f ? quitarFoto(f) : setConfirmaQuitar(f)
+                              }
+                              disabled={quitando}
+                              title="Quitar esta foto (moderación)"
+                              className={`absolute -top-1.5 -right-1.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border shadow-sm ${
+                                confirmaQuitar === f
+                                  ? "bg-rojo text-white border-rojo"
+                                  : "bg-white text-rojo border-linea"
+                              }`}
+                            >
+                              {confirmaQuitar === f ? "¿Quitar?" : "✕"}
+                            </button>
+                          )}
+                        </div>
                       ))}
+                    </div>
+                  )}
+                  {esAdmin && modAviso && (
+                    <div className="m-3 mt-0 bg-[#FDF1E3] border border-[#EFD9BB] rounded-xl px-3.5 py-2.5 text-xs text-tinta2">
+                      🧹 Foto quitada y borrada del almacenamiento.
+                      {modAviso.quedo_oculta ? " La moto quedó OCULTA (publicada sin fotos no se puede)." : ""}{" "}
+                      <a
+                        className="font-bold text-rojo underline underline-offset-2"
+                        href={`mailto:${modAviso.email}?subject=${encodeURIComponent(
+                          `Tu ${modAviso.moto_txt} en Motocambio — quitamos una foto`
+                        )}&body=${encodeURIComponent(
+                          `¡Hola ${modAviso.dueno}! Te escribimos de Motocambio. Quitamos una foto de tu publicación (${modAviso.moto_txt}) porque no correspondía a la moto.` +
+                            (modAviso.quedo_oculta
+                              ? " Como era la única foto, tu publicación quedó oculta: entrá a tu garage → ✏️ Editar, subí fotos de la moto y pasala a Publicada."
+                              : " El resto quedó igual.") +
+                            " Cualquier duda, respondé este mail."
+                        )}`}
+                      >
+                        ✉️ Avisarle a {modAviso.dueno}
+                      </a>
                     </div>
                   )}
                 </>
