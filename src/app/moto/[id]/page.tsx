@@ -60,6 +60,13 @@ export default function Ficha() {
       return;
     }
     const r = Array.isArray(data) ? data[0] : data;
+    // El archivo se borra por la API oficial de almacenamiento (la
+    // base ya quitó la foto de la publicación y dejó el registro).
+    const ruta = url.split("/object/public/fotos/")[1]?.split("?")[0];
+    if (ruta) {
+      const { error: errStorage } = await supabase.storage.from("fotos").remove([decodeURIComponent(ruta)]);
+      if (errStorage) console.error("[Motocambio] La foto salió de la publicación pero no se pudo borrar el archivo:", errStorage.message);
+    }
     const fotosNuevas = moto.fotos.filter((f) => f !== url);
     setMoto({ ...moto, fotos: fotosNuevas });
     setFotoActiva(0);
