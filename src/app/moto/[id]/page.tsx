@@ -41,11 +41,13 @@ export default function Ficha() {
   const [modAviso, setModAviso] = useState<{
     email: string; dueno: string; moto_txt: string; quedo_oculta: boolean;
   } | null>(null);
+  const [modError, setModError] = useState("");
 
   // Moderación: quitar una foto puntual (solo administradores)
   async function quitarFoto(url: string) {
     if (!moto || quitando) return;
     setQuitando(true);
+    setModError("");
     const { data, error } = await supabase.rpc("admin_quitar_foto", {
       p_moto: moto.id,
       p_url: url,
@@ -54,6 +56,7 @@ export default function Ficha() {
     setConfirmaQuitar(null);
     if (error) {
       console.error("[Motocambio] Error quitando foto:", error.message);
+      setModError(error.message);
       return;
     }
     const r = Array.isArray(data) ? data[0] : data;
@@ -202,6 +205,11 @@ export default function Ficha() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {esAdmin && modError && (
+                    <div className="m-3 mt-0 bg-[#FDECEC] border border-[#F2C4C4] rounded-xl px-3.5 py-2.5 text-xs text-rojo font-semibold">
+                      ⚠️ No se pudo quitar la foto. La base dijo: &quot;{modError}&quot;
                     </div>
                   )}
                   {esAdmin && modAviso && (
