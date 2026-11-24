@@ -3,6 +3,10 @@
     {
       "path": "/api/mail-bienvenida",
       "schedule": "17 13 * * *"
+    },
+    {
+      "path": "/api/recordatorio-matches",
+      "schedule": "47 13 * * *"
     }
   ]
 }
